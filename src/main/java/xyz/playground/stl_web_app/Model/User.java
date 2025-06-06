@@ -13,6 +13,9 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column
+    private String name;
+
     @Column(unique = true, nullable = false)
     private String username;
 
@@ -24,9 +27,27 @@ public class User {
 
     private boolean enabled = true;
 
+    public User() {
+    }
+
+    public User(String name, String username, String password, Set<String> roles) {
+        this.name = name;
+        this.username = username;
+        this.password = password;
+        this.roles = roles;
+    }
+
     // Getters and setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
@@ -39,4 +60,5 @@ public class User {
 
     public boolean isEnabled() { return enabled; }
     public void setEnabled(boolean enabled) { this.enabled = enabled; }
+
 }

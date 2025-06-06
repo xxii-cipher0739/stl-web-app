@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org">
+<body>
+<div th:fragment="content">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2" th:text="${user.id == null ? 'Add New User' : 'Edit User'}"></h1>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <form th:action="${user.id == null ? '/users/add' : '/users/update/' + user.id}" th:object="${user}" method="post">
+                <div class="mb-3">
+                    <label for="name" class="form-label">Name</label>
+                    <input type="text" class="form-control" id="name" th:field="*{name}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" class="form-control" id="username" th:field="*{username}" required>
+                </div>
+                <div class="mb-3" th:if="${user.id == null}">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="password" th:field="*{password}" th:required="${user.id == null}">
+                </div>
+                <div class="mb-3" th:if="${user.id != null}">
+                    <label for="updatePassword" class="form-label">New Password (leave blank to keep current)</label>
+                    <input type="password" class="form-control" id="updatePassword" name="updatePassword">
+                </div>
+                <div class="mb-3">
+                    <label for="role" class="form-label">Role</label>
+                    <select class="form-select" id="role" name="role" required>
+                        <option value="COLLECTOR" th:selected="${user.roles != null && user.roles.contains('COLLECTOR')}">Collector</option>
+                        <option value="ADMIN" th:selected="${user.roles != null && user.roles.contains('ADMIN')}">Admin</option>
+                    </select>
+                </div>
+                <div class="mb-3 form-check" th:if="${user.id != null}">
+                    <input type="checkbox" class="form-check-input" id="enabled" th:field="*{enabled}">
+                    <label class="form-check-label" for="enabled">Active</label>
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+                <a th:href="@{/users}" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

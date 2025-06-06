@@ -32,7 +32,7 @@ public class SecurityConfig {
                         .key("uniqueAndSecretKey")
                         .tokenValiditySeconds(86400) // 1 day
                 )
-                .logout(logout -> logout.permitAll());
+                .logout(LogoutConfigurer::permitAll);
 
         return http.build();
     }

@@ -10,21 +10,22 @@ import java.util.Set;
 
 @Service
 public class UserService {
+
     @Autowired
     private UserRepository userRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    public User createUser(String username, String password, String role) {
-        User user = new User();
-        user.setUsername(username);
-        user.setPassword(passwordEncoder.encode(password));
+    public User createUser(String name, String username, String password, String role) {
 
         Set<String> roles = new HashSet<>();
         roles.add(role);
-        user.setRoles(roles);
 
-        return userRepository.save(user);
+        return userRepository.save(new User(name,
+                username,
+                passwordEncoder.encode(password),
+                roles)
+        );
     }
 }
