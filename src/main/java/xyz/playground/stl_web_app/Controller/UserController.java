@@ -6,17 +6,18 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import xyz.playground.stl_web_app.Model.User;
 import xyz.playground.stl_web_app.Repository.UserRepository;
 import xyz.playground.stl_web_app.Service.UserService;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
+import static xyz.playground.stl_web_app.Constants.StringConstants.*;
+
 @Controller
-@RequestMapping("/users")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize(ROLE_HAS_ADMIN)
 public class UserController {
 
     @Autowired
@@ -28,72 +29,95 @@ public class UserController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    @GetMapping
+    @GetMapping(ENDPOINT_USERS)
     public String listUsers(Model model) {
-        List<User> users = userRepository.findAll();
-        model.addAttribute("users", users);
-        model.addAttribute("pageTitle", "Users");
-        model.addAttribute("activeTab", "users");
-        model.addAttribute("viewName", "users/list");
-        return "layout/main";
+        model.addAttribute(VAR_USER_LIST, userRepository.findAll());
+        model.addAttribute(PAGE_TITLE, USERS_TITLE);
+        model.addAttribute(ACTIVE_TAB, USERS);
+        model.addAttribute(VIEW_NAME, ENDPOINT_USER_LIST);
+        return MAIN_LAYOUT;
     }
 
-    @GetMapping("/add")
+    @GetMapping(ENDPOINT_USERS_ADD)
     public String showAddForm(Model model) {
-        model.addAttribute("user", new User());
-        model.addAttribute("pageTitle", "Add User");
-        model.addAttribute("activeTab", "users");
-        model.addAttribute("viewName", "users/form");
-        return "layout/main";
+        model.addAttribute(VAR_NEW_USER, new User());
+        model.addAttribute(PAGE_TITLE, USERS_ADD_TITLE);
+        model.addAttribute(ACTIVE_TAB, USERS);
+        model.addAttribute(VIEW_NAME, ENDPOINT_USER_FORM);
+        return MAIN_LAYOUT;
     }
 
 
-    @PostMapping("/add")
-    public String addUser(@ModelAttribute User user, @RequestParam String role) {
-        Set<String> roles = new HashSet<>();
-        roles.add(role);
-        user.setRoles(roles);
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        userRepository.save(user);
-        return "redirect:/users";
-    }
+    @PostMapping(ENDPOINT_USERS_ADD)
+    public String addUser(@ModelAttribute User user, @RequestParam String role, RedirectAttributes redirectAttributes) {
+        try {
+            Set<String> roles = new HashSet<>();
+            roles.add(role);
+            user.setRoles(roles);
 
-    @GetMapping("/edit/{id}")
-    public String showEditForm(@PathVariable Long id, Model model) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid user Id:" + id));
-        model.addAttribute("user", user);
-        model.addAttribute("pageTitle", "Edit User");
-        model.addAttribute("activeTab", "users");
-        model.addAttribute("viewName", "users/form");
-        return "layout/main";
-    }
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
 
-    @PostMapping("/update/{id}")
-    public String updateUser(@PathVariable Long id, @ModelAttribute User user,
-                             @RequestParam String role, @RequestParam(required = false) String updatePassword) {
-        User existingUser = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid user Id:" + id));
+            userRepository.save(user);
 
-        existingUser.setName(user.getName());
-        existingUser.setUsername(user.getUsername());
+            redirectAttributes.addFlashAttribute(VAR_SUCCESS_MESSAGE, SUCCESSFUL_ADD_USER);
 
-        if (updatePassword != null && !updatePassword.isEmpty()) {
-            existingUser.setPassword(passwordEncoder.encode(updatePassword));
+        } catch (Exception e) {
+            e.printStackTrace();
+            redirectAttributes.addFlashAttribute(VAR_ERROR_MESSAGE, ERROR_ADD_USER + e.getMessage());
         }
 
-        Set<String> roles = new HashSet<>();
-        roles.add(role);
-        existingUser.setRoles(roles);
-        existingUser.setEnabled(user.isEnabled());
-
-        userRepository.save(existingUser);
-        return "redirect:/users";
+        return REDIRECT_USERS;
     }
 
-    @GetMapping("/delete/{id}")
-    public String deleteUser(@PathVariable Long id) {
-        userRepository.deleteById(id);
-        return "redirect:/users";
+    @GetMapping(ENDPOINT_USERS_EDIT)
+    public String showEditForm(@PathVariable Long id, Model model) {
+
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException(INVALID_USER_ID + id));
+
+        model.addAttribute(VAR_NEW_USER, user);
+        model.addAttribute(PAGE_TITLE, USERS_EDIT_TITLE);
+        model.addAttribute(ACTIVE_TAB, USERS);
+        model.addAttribute(VIEW_NAME, ENDPOINT_USER_FORM);
+        return MAIN_LAYOUT;
+    }
+
+    @PostMapping(ENDPOINT_USERS_UPDATE)
+    public String updateUser(@PathVariable Long id, @ModelAttribute User user,
+                             @RequestParam String role, @RequestParam(required = false) String updatePassword,
+                             RedirectAttributes redirectAttributes) {
+        try {
+            User existingUser = userRepository.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException(INVALID_USER_ID + id));
+
+            existingUser.setName(user.getName());
+
+            if (updatePassword != null && !updatePassword.isEmpty()) {
+                existingUser.setPassword(passwordEncoder.encode(updatePassword));
+            }
+
+            Set<String> roles = new HashSet<>();
+            roles.add(role);
+            existingUser.setRoles(roles);
+            existingUser.setEnabled(user.isEnabled());
+
+            userRepository.save(existingUser);
+            redirectAttributes.addFlashAttribute(VAR_SUCCESS_MESSAGE, SUCCESSFUL_UPDATE_USER);
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute(VAR_ERROR_MESSAGE, ERROR_UPDATE_USER + e.getMessage());
+        }
+
+        return REDIRECT_USERS;
+    }
+
+    @GetMapping(ENDPOINT_USERS_DELETE)
+    public String deleteUser(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            userRepository.deleteById(id);
+            redirectAttributes.addFlashAttribute(VAR_SUCCESS_MESSAGE, SUCCESSFUL_DELETE_USER);
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute(VAR_ERROR_MESSAGE, ERROR_DELETE_USER + e.getMessage());
+        }
+        return REDIRECT_USERS;
     }
 }

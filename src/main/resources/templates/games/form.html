@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org">
+<body>
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2" th:text="${game.id == null ? 'Add New Game' : 'Edit Game'}"></h1>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <form th:action="${game.id == null ? '/games/add' : '/games/update/' + game.id}" th:object="${game}" method="post">
+            <input type="hidden" th:field="*{id}" />
+            <input type="hidden" th:field="*{executed}" />
+
+            <div class="mb-3" th:if="${game.id != null}">
+                <label for="uuid" class="form-label">UUID</label>
+                <input type="text" class="form-control" id="uuid" th:field="*{uuid}" readonly>
+            </div>
+
+            <div class="mb-3">
+                <label for="gameType" class="form-label">Game Type</label>
+                <select class="form-select" id="gameType" th:field="*{gameType}" required>
+                    <option value="">Select Game Type</option>
+                    <option th:each="type : ${gameTypes}"
+                            th:value="${type.name()}"
+                            th:text="${type.getValue()}">
+                    </option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label for="scheduleDateTime" class="form-label">Schedule Date and Time</label>
+                <input type="datetime-local" class="form-control" id="scheduleDateTime"
+                       th:field="*{scheduleDateTime}" required
+                       th:readonly="${game.executed}">
+            </div>
+
+            <div class="mb-3">
+                <label for="cutOffDateTime" class="form-label">Cut-off Date and Time</label>
+                <input type="datetime-local" class="form-control" id="cutOffDateTime"
+                       th:field="*{cutOffDateTime}" required
+                       th:readonly="${game.executed}">
+                <small class="form-text text-muted">Cut-off time must be before schedule time</small>
+            </div>
+
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="enabled" th:field="*{enabled}">
+                <label class="form-check-label" for="enabled">Active</label>
+            </div>
+
+            <button type="submit" class="btn btn-primary" th:disabled="${game.executed}">Save</button>
+            <a th:href="@{/games}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Add client-side validation for dates
+    document.addEventListener('DOMContentLoaded', function() {
+        const scheduleInput = document.getElementById('scheduleDateTime');
+        const cutoffInput = document.getElementById('cutOffDateTime');
+
+        function validateDates() {
+            const scheduleDate = new Date(scheduleInput.value);
+            const cutoffDate = new Date(cutoffInput.value);
+
+            if (cutoffDate >= scheduleDate) {
+                cutoffInput.setCustomValidity('Cut-off time must be before schedule time');
+            } else {
+                cutoffInput.setCustomValidity('');
+            }
+        }
+
+        scheduleInput.addEventListener('change', validateDates);
+        cutoffInput.addEventListener('change', validateDates);
+    });
+</script>
+</body>
+</html>

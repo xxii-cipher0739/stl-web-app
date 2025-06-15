@@ -20,7 +20,9 @@ public class DataInitializer implements CommandLineRunner {
         // Only create default users if no users exist
         if (userRepository.count() == 0) {
             userService.createUser("Administrator","admin", "password1234", Role.ADMIN.toString());
-            userService.createUser("Test User","user", "password1234", Role.COLLECTOR.toString());
+            userService.createUser("Test Dispatcher","user_dispatcher", "password1234", Role.DISPATCHER.toString());
+            userService.createUser("Test Collector","user_collector", "password1234", Role.COLLECTOR.toString());
         }
+        
     }
 }

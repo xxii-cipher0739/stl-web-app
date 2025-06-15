@@ -23,6 +23,14 @@
             border-color: #32383e !important;
         }
 
+        .table tbody tr {
+            border-bottom: 1px solid #848884;
+        }
+
+        .table tbody tr:last-child {
+            border-bottom: 2px solid #848884;
+        }
+
         .sidebar {
             position: fixed;
             top: 0;
@@ -87,6 +95,17 @@
             box-shadow: 0 0 0 0.25rem rgba(0, 0, 0, 0.25);
         }
 
+        .form-check-input {
+            border: 2px solid #000;
+            width: 1.2em;
+            height: 1.2em;
+        }
+
+        .form-check-input:checked {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+
         .content {
             padding-top: 1.5rem;
         }
@@ -147,8 +166,8 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" th:classappend="${activeTab == 'lottery-draw' ? 'active' : ''}" th:href="@{/lottery-draw}">
-                            Lottery Draw
+                        <a class="nav-link" th:classappend="${activeTab == 'games' ? 'active' : ''}" th:href="@{/games}">
+                            Games
                         </a>
                     </li>
                     <li class="nav-item" sec:authorize="hasRole('ADMIN')">
