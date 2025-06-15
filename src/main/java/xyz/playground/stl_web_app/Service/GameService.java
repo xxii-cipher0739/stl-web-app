@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static xyz.playground.stl_web_app.Constants.StringConstants.INVALID_USER_ID;
+
 @Service
 public class GameService {
     @Autowired
@@ -54,7 +56,8 @@ public class GameService {
         return gameRepository.save(game);
     }
 
-    public Game updateGame(Game game) {
+    public Game updateGame(Long id, Game game) {
+
         // Validate that schedule date is after current date if not executed
         if (!game.isExecuted() && game.getScheduleDateTime().isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("Schedule date must be in the future for non-executed games");
@@ -65,7 +68,14 @@ public class GameService {
             throw new IllegalArgumentException("Cut-off date must be before schedule date");
         }
 
-        return gameRepository.save(game);
+        Game currentGame = gameRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid game id: " + id));
+        
+        currentGame.setScheduleDateTime(game.getScheduleDateTime());
+        currentGame.setCutOffDateTime(game.getCutOffDateTime());
+        currentGame.setEnabled(game.isEnabled());
+
+        return gameRepository.save(currentGame);
     }
 
     public void deleteGame(Long id) {

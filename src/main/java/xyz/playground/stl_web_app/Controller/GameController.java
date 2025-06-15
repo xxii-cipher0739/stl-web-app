@@ -11,6 +11,7 @@ import xyz.playground.stl_web_app.Model.Game;
 import xyz.playground.stl_web_app.Service.GameService;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Controller
 @RequestMapping("/games")
@@ -63,7 +64,14 @@ public class GameController {
         Game game = gameService.getGameById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid game Id:" + id));
 
+        // Format dates for datetime-local input
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+        String formattedScheduleDate = game.getScheduleDateTime().format(formatter);
+        String formattedCutOffDate = game.getCutOffDateTime().format(formatter);
+
         model.addAttribute("game", game);
+        model.addAttribute("formattedScheduleDate", formattedScheduleDate);
+        model.addAttribute("formattedCutOffDate", formattedCutOffDate);
         model.addAttribute("gameTypes", GameType.values());
         model.addAttribute("pageTitle", "Edit Game - STL Web App");
         model.addAttribute("activeTab", "games");
@@ -76,7 +84,7 @@ public class GameController {
     @PreAuthorize("hasRole('ADMIN')")
     public String updateGame(@PathVariable Long id, @ModelAttribute Game game, RedirectAttributes redirectAttributes) {
         try {
-            gameService.updateGame(game);
+            gameService.updateGame(id, game);
             redirectAttributes.addFlashAttribute("successMessage", "Game updated successfully");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Error updating game: " + e.getMessage());

@@ -11,14 +11,9 @@
             <input type="hidden" th:field="*{id}" />
             <input type="hidden" th:field="*{executed}" />
 
-            <div class="mb-3" th:if="${game.id != null}">
-                <label for="uuid" class="form-label">UUID</label>
-                <input type="text" class="form-control" id="uuid" th:field="*{uuid}" readonly>
-            </div>
-
             <div class="mb-3">
                 <label for="gameType" class="form-label">Game Type</label>
-                <select class="form-select" id="gameType" th:field="*{gameType}" required>
+                <select class="form-select" id="gameType" th:field="*{gameType}" required th:disabled="${game.id != null}">
                     <option value="">Select Game Type</option>
                     <option th:each="type : ${gameTypes}"
                             th:value="${type.name()}"
@@ -30,14 +25,14 @@
             <div class="mb-3">
                 <label for="scheduleDateTime" class="form-label">Schedule Date and Time</label>
                 <input type="datetime-local" class="form-control" id="scheduleDateTime"
-                       th:field="*{scheduleDateTime}" required
+                       th:value="${formattedScheduleDate}" name="scheduleDateTime" required
                        th:readonly="${game.executed}">
             </div>
 
             <div class="mb-3">
                 <label for="cutOffDateTime" class="form-label">Cut-off Date and Time</label>
                 <input type="datetime-local" class="form-control" id="cutOffDateTime"
-                       th:field="*{cutOffDateTime}" required
+                       th:value="${formattedCutOffDate}" name="cutOffDateTime" required
                        th:readonly="${game.executed}">
                 <small class="form-text text-muted">Cut-off time must be before schedule time</small>
             </div>
@@ -74,5 +69,6 @@
         cutoffInput.addEventListener('change', validateDates);
     });
 </script>
+
 </body>
 </html>
