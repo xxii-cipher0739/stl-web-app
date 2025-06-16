@@ -23,6 +23,5 @@ public class DataInitializer implements CommandLineRunner {
             userService.createUser("Test Dispatcher","user_dispatcher", "password1234", Role.DISPATCHER.toString());
             userService.createUser("Test Collector","user_collector", "password1234", Role.COLLECTOR.toString());
         }
-
     }
 }

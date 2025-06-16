@@ -42,7 +42,10 @@
                 <label class="form-check-label" for="enabled">Active</label>
             </div>
 
-            <button type="submit" class="btn btn-primary" th:disabled="${newGame.executed}">Save</button>
+            <button type="submit" class="btn btn-primary" th:disabled="${newGame.executed}"
+                    onclick="return confirm('Are you sure you want to save?');">
+                Save
+            </button>
             <a th:href="@{/games}" class="btn btn-secondary">Cancel</a>
         </form>
     </div>
