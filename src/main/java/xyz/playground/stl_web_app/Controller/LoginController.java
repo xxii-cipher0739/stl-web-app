@@ -9,8 +9,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import xyz.playground.stl_web_app.Model.CustomUserDetails;
 import xyz.playground.stl_web_app.Model.Game;
 import xyz.playground.stl_web_app.Model.Request;
+import xyz.playground.stl_web_app.Model.Wallet;
 import xyz.playground.stl_web_app.Service.GameService;
 import xyz.playground.stl_web_app.Service.RequestService;
+import xyz.playground.stl_web_app.Service.WalletService;
 
 import java.util.List;
 
@@ -23,6 +25,7 @@ import static xyz.playground.stl_web_app.Constants.StringConstants.MAIN_LAYOUT;
 public class LoginController {
 
     private final String VAR_NEXT_GAME = "nextGame";
+    private final String VAR_WALLET_BALANCE = "walletBalance";
     private final String VAR_PENDING_REQUEST = "pendingRequests";
     private final String VAR_PENDING_REQUEST_COUNT = "pendingRequestsCount";
 
@@ -40,6 +43,9 @@ public class LoginController {
 
     @Autowired
     private RequestService requestService;
+
+    @Autowired
+    private WalletService walletService;
 
     @GetMapping(ENDPOINT_LOGIN)
     public String login() {
@@ -62,6 +68,10 @@ public class LoginController {
         List<Game> upcomingGames = gameService.getUpcomingGames();
         Game nextGame = upcomingGames.isEmpty() ? null : upcomingGames.get(0);
 
+        // Get current wallet balance
+        Wallet wallet = walletService.getWalletByOwnerId(currentUserId);
+
+        model.addAttribute("walletBalance", wallet.getBalance());
         model.addAttribute(VAR_PENDING_REQUEST, pendingRequests);
         model.addAttribute(VAR_PENDING_REQUEST_COUNT, pendingRequests.size());
         model.addAttribute(VAR_NEXT_GAME, nextGame);

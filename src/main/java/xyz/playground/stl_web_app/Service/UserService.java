@@ -4,7 +4,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import xyz.playground.stl_web_app.Model.User;
+import xyz.playground.stl_web_app.Model.Wallet;
 import xyz.playground.stl_web_app.Repository.UserRepository;
+import xyz.playground.stl_web_app.Repository.WalletRepository;
+
+import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -15,6 +19,9 @@ public class UserService {
     private UserRepository userRepository;
 
     @Autowired
+    private WalletService walletService;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     public User createUser(String name, String username, String password, String role) {
@@ -22,10 +29,19 @@ public class UserService {
         Set<String> roles = new HashSet<>();
         roles.add(role);
 
-        return userRepository.save(new User(name,
+        User createdUser = userRepository.save(new User(name,
                 username,
                 passwordEncoder.encode(password),
                 roles)
         );
+
+        walletService.createWallet(createdUser.getId());
+
+        return createdUser;
+    }
+
+    public User findActiveUser(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid user id:" + id));
     }
 }

@@ -59,6 +59,21 @@ public class User {
     public void setRoles(Set<String> roles) { this.roles = roles; }
 
     public boolean isEnabled() { return enabled; }
+
     public void setEnabled(boolean enabled) { this.enabled = enabled; }
 
+    public boolean hasRole(String role) {
+        return this.roles.contains(role);
+    }
+
+    public String getPrimaryRole() {
+        if (this.roles.contains("ADMIN")) {
+            return "ADMIN";
+        } else if (this.roles.contains("DISPATCHER")) {
+            return "DISPATCHER";
+        } else if (this.roles.contains("COLLECTOR")) {
+            return "COLLECTOR";
+        }
+        return "USER";
+    }
 }

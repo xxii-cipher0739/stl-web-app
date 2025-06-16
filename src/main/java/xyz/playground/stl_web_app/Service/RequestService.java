@@ -15,16 +15,15 @@ public class RequestService {
     @Autowired
     private RequestRepository requestRepository;
 
+    @Autowired
+    private WalletService walletService;
+
     public List<Request> getAllRequests() {
         return requestRepository.findAll();
     }
 
     public Optional<Request> getRequestById(Long id) {
         return requestRepository.findById(id);
-    }
-
-    public Optional<Request> getRequestByReference(String reference) {
-        return requestRepository.findByReference(reference);
     }
 
     public List<Request> getRequestsByRequestedBy(Long userId) {
@@ -69,38 +68,33 @@ public class RequestService {
     }
 
     public Request approveRequest(Long id) {
-        Request request = requestRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid request Id:" + id));
-
-        request.setProcessed(true);
-        request.setStatus(RequestStatus.APPROVED);
-        return requestRepository.save(request);
+        return processRequest(id, RequestStatus.APPROVED);
     }
 
     public Request rejectRequest(Long id) {
-        Request request = requestRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid request Id:" + id));
-
-        request.setProcessed(true);
-        request.setStatus(RequestStatus.REJECTED);
-        return requestRepository.save(request);
+        return processRequest(id, RequestStatus.REJECTED);
     }
 
     public Request cancelRequest(Long id) {
-        Request request = requestRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid request Id:" + id));
-
-        request.setProcessed(true);
-        request.setStatus(RequestStatus.CANCELLED);
-        return requestRepository.save(request);
-    }
-
-    public void deleteRequest(Long id) {
-        requestRepository.deleteById(id);
+        return processRequest(id, RequestStatus.CANCELLED);
     }
 
     private String generateReference() {
         // Generate a unique reference code (REQ-UUID)
         return "REQ-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    }
+
+    private Request processRequest(Long id, RequestStatus status) {
+        Request request = requestRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid request Id:" + id));
+
+        request.setProcessed(true);
+        request.setStatus(status);
+
+        if (RequestStatus.APPROVED == status) {
+            walletService.adjustWallets(request.getRequestedBy(), request.getRequestedTo(), request.getAmount());
+        }
+
+        return requestRepository.save(request);
     }
 }

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
 <body>
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">Dashboard</h1>
@@ -8,7 +9,7 @@
 <div class="row">
 
     <div class="col-md-6 col-lg-3 mb-4">
-        <div class="card text-white bg-info">
+        <div class="card text-white bg-primary">
             <div class="card-body">
                 <h5 class="card-title">Next Draw</h5>
                 <p class="card-text" th:if="${nextGame != null}">
@@ -17,43 +18,34 @@
                     <span th:text="${#temporals.format(nextGame.scheduleDateTime, 'HH:mm')}"></span>
                 </p>
                 <p class="card-text" th:if="${nextGame == null}">
-                    <span class="display-6">No games</span>
-                    <br>
-                    <span>scheduled</span>
+                    <span class="display-6">TBA</span>
                 </p>
             </div>
         </div>
     </div>
 
-    <div class="col-md-6 col-lg-3 mb-4">
-        <div class="card text-white bg-primary">
+    <div class="col-md-6 col-lg-3 mb-4" sec:authorize="hasRole('COLLECTOR') or hasRole('DISPATCHER')">
+        <div class="card text-white bg-success">
             <div class="card-body">
-                <h5 class="card-title">Total Users</h5>
-                <p class="card-text display-6">125</p>
+                <h5 class="card-title">Current Balance</h5>
+                <p class="card-text display-6">
+                    <span th:text="${walletBalance}"></span> <sub> Php </sub>
+                </p>
             </div>
         </div>
     </div>
-    <div class="col-md-6 col-lg-3 mb-4">
-        <div class="card text-white bg-success">
+
+    <div class="col-md-6 col-lg-3 mb-4" sec:authorize="hasRole('COLLECTOR')">
+        <div class="card text-white bg-danger">
             <div class="card-body">
-                <h5 class="card-title">Active Bets</h5>
+                <h5 class="card-title">Placed Bets Today</h5>
                 <p class="card-text display-6">42</p>
             </div>
         </div>
     </div>
 
-    <div class="col-md-6 col-lg-3 mb-4">
+    <div class="col-md-6 col-lg-3 mb-4" sec:authorize="hasRole('DISPATCHER') or hasRole('ADMIN')">
         <div class="card text-white bg-danger">
-            <div class="card-body">
-                <h5 class="card-title">Prize Pool</h5>
-                <p class="card-text display-6">$5,280</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Add this to the dashboard cards section -->
-    <div class="col-md-6 col-lg-3 mb-4">
-        <div class="card text-white bg-info">
             <div class="card-body">
                 <h5 class="card-title">Pending Requests</h5>
                 <p class="card-text display-6" th:text="${pendingRequestsCount}">0</p>
@@ -61,9 +53,39 @@
         </div>
     </div>
 
+    <div class="col-md-6 col-lg-3 mb-4" sec:authorize="hasRole('COLLECTOR')">
+        <div class="card text-white bg-secondary">
+            <div class="card-body">
+                <h5 class="card-title">Total Placed Bets</h5>
+                <p class="card-text display-6">5,280</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3 mb-4" sec:authorize="hasRole('ADMIN')">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h5 class="card-title">Overall Total Bets</h5>
+                <p class="card-text display-6">5,280
+                    <sub> Php </sub>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3 mb-4" sec:authorize="hasRole('ADMIN') or hasRole('DISPATCHER')">
+        <div class="card text-white bg-secondary">
+            <div class="card-body">
+                <h5 class="card-title">No. of games today</h5>
+                <p class="card-text display-6">0
+                </p>
+            </div>
+        </div>
+    </div>
+
 </div>
 
-<h2>Recent Activity</h2>
+<h2>Recent Transactions</h2>
 <div class="table-responsive">
     <table class="table table-striped table-sm">
         <thead>
