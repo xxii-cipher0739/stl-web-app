@@ -3,9 +3,11 @@ package xyz.playground.stl_web_app.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import xyz.playground.stl_web_app.Constants.RequestStatus;
+import xyz.playground.stl_web_app.Constants.TransactionType;
 import xyz.playground.stl_web_app.Model.Request;
 import xyz.playground.stl_web_app.Repository.RequestRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -17,6 +19,9 @@ public class RequestService {
 
     @Autowired
     private WalletService walletService;
+
+    @Autowired
+    private TransactionService transactionService;
 
     public List<Request> getAllRequests() {
         return requestRepository.findAll();
@@ -52,6 +57,9 @@ public class RequestService {
             request.setReference(generateReference());
         }
 
+        // Set Date Time now as created date
+        request.setDateTimeCreated(LocalDateTime.now());
+
         // Set processed to false for new requests
         request.setProcessed(false);
 
@@ -60,7 +68,15 @@ public class RequestService {
             request.setStatus(RequestStatus.PENDING);
         }
 
-        return requestRepository.save(request);
+        Request createdRequest = requestRepository.save(request);
+
+        transactionService.createTransaction(
+                createdRequest.getReference(),
+                TransactionType.REQUEST,
+                createdRequest.getAmount(),
+                createdRequest.getStatus().name());
+
+        return createdRequest;
     }
 
     public Request updateRequest(Request request) {
@@ -81,7 +97,7 @@ public class RequestService {
 
     private String generateReference() {
         // Generate a unique reference code (REQ-UUID)
-        return "REQ-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        return TransactionType.REQUEST.getValue() + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 
     private Request processRequest(Long id, RequestStatus status) {
@@ -94,6 +110,12 @@ public class RequestService {
         if (RequestStatus.APPROVED == status) {
             walletService.adjustWallets(request.getRequestedBy(), request.getRequestedTo(), request.getAmount());
         }
+
+        transactionService.createTransaction(
+                request.getReference(),
+                TransactionType.REQUEST,
+                request.getAmount(),
+                request.getStatus().name());
 
         return requestRepository.save(request);
     }

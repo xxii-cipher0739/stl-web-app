@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import xyz.playground.stl_web_app.Constants.RequestStatus;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "request")
@@ -15,6 +16,9 @@ public class Request {
 
     @Column(unique = true, nullable = false)
     private String reference;
+
+    @Column
+    private LocalDateTime dateTimeCreated;
 
     @Column
     private Long requestedBy;
@@ -34,9 +38,10 @@ public class Request {
     public Request() {
     }
 
-    public Request(Long id, String reference, Long requestedBy, Long requestedTo, BigDecimal amount, boolean processed, RequestStatus status) {
+    public Request(Long id, String reference, LocalDateTime dateTimeCreated, Long requestedBy, Long requestedTo, BigDecimal amount, boolean processed, RequestStatus status) {
         this.id = id;
         this.reference = reference;
+        this.dateTimeCreated = dateTimeCreated;
         this.requestedBy = requestedBy;
         this.requestedTo = requestedTo;
         this.amount = amount;
@@ -58,6 +63,14 @@ public class Request {
 
     public void setReference(String reference) {
         this.reference = reference;
+    }
+
+    public LocalDateTime getDateTimeCreated() {
+        return dateTimeCreated;
+    }
+
+    public void setDateTimeCreated(LocalDateTime dateTimeCreated) {
+        this.dateTimeCreated = dateTimeCreated;
     }
 
     public Long getRequestedBy() {

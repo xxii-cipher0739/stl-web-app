@@ -37,6 +37,7 @@
         <thead>
         <tr>
             <th scope="col">Reference</th>
+            <th scope="col">Date Created</th>
             <th scope="col">Requested By</th>
             <th scope="col">Requested To</th>
             <th scope="col">Amount</th>
@@ -47,6 +48,7 @@
         <tbody>
         <tr th:each="request : ${requests}">
             <td th:text="${request.reference}"></td>
+            <td th:text="${#temporals.format(request.dateTimeCreated, 'EEEE, MMMM dd, yyyy hh:mm a')}"></td>
             <td>
                 <span th:each="user : ${users}" th:if="${user.id == request.requestedBy}" th:text="${user.name}"></span>
             </td>

@@ -37,8 +37,8 @@
         <thead>
         <tr>
             <th scope="col">Game Type</th>
-            <th scope="col">Schedule Date</th>
             <th scope="col">Cut-off Date</th>
+            <th scope="col">Schedule Date</th>
             <th scope="col">Status</th>
             <th scope="col">Actions</th>
         </tr>
@@ -46,8 +46,8 @@
         <tbody>
         <tr th:each="game : ${gameList}">
             <td th:text="${game.getGameTypeValue()}"></td>
-            <td th:text="${#temporals.format(game.scheduleDateTime, 'yyyy-MM-dd HH:mm')}"></td>
-            <td th:text="${#temporals.format(game.cutOffDateTime, 'yyyy-MM-dd HH:mm')}"></td>
+            <td th:text="${#temporals.format(game.cutOffDateTime, 'EEEE, MMMM dd, yyyy hh:mm a')}"></td>
+            <td th:text="${#temporals.format(game.scheduleDateTime, 'EEEE, MMMM dd, yyyy hh:mm a')}"></td>
             <td>
                 <span th:if="${game.executed}" class="badge bg-danger">Executed</span>
                 <span th:unless="${game.executed}" class="badge bg-primary">Pending</span>
