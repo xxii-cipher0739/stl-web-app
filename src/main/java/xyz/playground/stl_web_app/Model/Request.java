@@ -1,6 +1,9 @@
 package xyz.playground.stl_web_app.Model;
 
 import jakarta.persistence.*;
+import xyz.playground.stl_web_app.Constants.RequestStatus;
+
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "request")
@@ -20,14 +23,25 @@ public class Request {
     private Long requestedTo;
 
     @Column
+    private BigDecimal amount;
+
+    @Column
     private boolean processed;
 
-    public Request(Long id, String reference, Long requestedBy, Long requestedTo, boolean processed) {
+    @Column
+    private RequestStatus status;
+
+    public Request() {
+    }
+
+    public Request(Long id, String reference, Long requestedBy, Long requestedTo, BigDecimal amount, boolean processed, RequestStatus status) {
         this.id = id;
         this.reference = reference;
         this.requestedBy = requestedBy;
         this.requestedTo = requestedTo;
+        this.amount = amount;
         this.processed = processed;
+        this.status = status;
     }
 
     public Long getId() {
@@ -62,11 +76,27 @@ public class Request {
         this.requestedTo = requestedTo;
     }
 
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
+    }
+
     public boolean isProcessed() {
         return processed;
     }
 
     public void setProcessed(boolean processed) {
         this.processed = processed;
+    }
+
+    public RequestStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(RequestStatus status) {
+        this.status = status;
     }
 }

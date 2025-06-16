@@ -50,6 +50,17 @@
             </div>
         </div>
     </div>
+
+    <!-- Add this to the dashboard cards section -->
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h5 class="card-title">Pending Requests</h5>
+                <p class="card-text display-6" th:text="${pendingRequestsCount}">0</p>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <h2>Recent Activity</h2>

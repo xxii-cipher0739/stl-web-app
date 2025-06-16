@@ -1,11 +1,16 @@
 package xyz.playground.stl_web_app.Controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import xyz.playground.stl_web_app.Model.CustomUserDetails;
 import xyz.playground.stl_web_app.Model.Game;
+import xyz.playground.stl_web_app.Model.Request;
 import xyz.playground.stl_web_app.Service.GameService;
+import xyz.playground.stl_web_app.Service.RequestService;
 
 import java.util.List;
 
@@ -17,10 +22,12 @@ import static xyz.playground.stl_web_app.Constants.StringConstants.MAIN_LAYOUT;
 @Controller
 public class LoginController {
 
-    private  String VAR_NEXT_GAME = "nextGame";
+    private final String VAR_NEXT_GAME = "nextGame";
+    private final String VAR_PENDING_REQUEST = "pendingRequests";
+    private final String VAR_PENDING_REQUEST_COUNT = "pendingRequestsCount";
 
-    public static final String LOGIN = "login";
-    public static final String DASHBOARD = "dashboard";
+    private final String LOGIN = "login";
+    private final String DASHBOARD = "dashboard";
 
     private final String ENDPOINT_BASE = "/";
     private final String ENDPOINT_LOGIN = "/login";
@@ -31,6 +38,9 @@ public class LoginController {
     @Autowired
     private GameService gameService;
 
+    @Autowired
+    private RequestService requestService;
+
     @GetMapping(ENDPOINT_LOGIN)
     public String login() {
         return LOGIN;
@@ -40,10 +50,20 @@ public class LoginController {
     @GetMapping(ENDPOINT_DASHBOARD)
     public String dashboard(Model model) {
 
+        // Get current user
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
+        Long currentUserId = userDetails.getId();
+
+        // Get pending requests for current user
+        List<Request> pendingRequests = requestService.getPendingRequestsForUser(currentUserId);
+
         // Get upcoming games
         List<Game> upcomingGames = gameService.getUpcomingGames();
         Game nextGame = upcomingGames.isEmpty() ? null : upcomingGames.get(0);
 
+        model.addAttribute(VAR_PENDING_REQUEST, pendingRequests);
+        model.addAttribute(VAR_PENDING_REQUEST_COUNT, pendingRequests.size());
         model.addAttribute(VAR_NEXT_GAME, nextGame);
         model.addAttribute(PAGE_TITLE, DASHBOARD_TITLE);
         model.addAttribute(ACTIVE_TAB, DASHBOARD);
