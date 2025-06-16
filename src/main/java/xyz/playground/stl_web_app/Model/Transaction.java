@@ -13,6 +13,9 @@ public class Transaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Transient
+    private String userName;
+
     @Column
     private String reference;
 
@@ -99,5 +102,13 @@ public class Transaction {
 
     public void setAction(String action) {
         this.action = action;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 }

@@ -11,6 +11,7 @@ import xyz.playground.stl_web_app.Repository.TransactionRepository;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class TransactionService {
@@ -35,5 +36,22 @@ public class TransactionService {
 
         return transactionRepository.save(transaction);
     }
+
+    public List<Transaction> getAllTransactions() {
+        return transactionRepository.findAllOrderByCreatedAtDesc();
+    }
+
+    public List<Transaction> getRecentTransactions(int limit) {
+        return transactionRepository.findRecentTransactions(limit);
+    }
+
+    public List<Transaction> getTransactionsByUserId(Long userId) {
+        return transactionRepository.findByUserIdOrderByCreatedAtDesc(userId);
+    }
+
+    public List<Transaction> getRecentTransactionsByUserId(Long userId, int limit) {
+        return transactionRepository.findRecentTransactionsByUserId(userId, limit);
+    }
+
 
 }
