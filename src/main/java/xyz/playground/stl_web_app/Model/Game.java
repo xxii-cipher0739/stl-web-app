@@ -13,9 +13,6 @@ public class Game {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
-    private String uuid;
-
     @Column(nullable = false)
     private LocalDateTime scheduleDateTime;
 
@@ -32,9 +29,8 @@ public class Game {
     public Game() {
     }
 
-    public Game(Long id, String uuid, LocalDateTime scheduleDateTime, LocalDateTime cutOffDateTime, String gameType, boolean executed, boolean enabled) {
+    public Game(Long id, LocalDateTime scheduleDateTime, LocalDateTime cutOffDateTime, String gameType, boolean executed, boolean enabled) {
         this.id = id;
-        this.uuid = uuid;
         this.scheduleDateTime = scheduleDateTime;
         this.cutOffDateTime = cutOffDateTime;
         this.gameType = gameType;
@@ -48,14 +44,6 @@ public class Game {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public String getUuid() {
-        return uuid;
-    }
-
-    public void setUuid(String uuid) {
-        this.uuid = uuid;
     }
 
     public LocalDateTime getScheduleDateTime() {

@@ -13,107 +13,154 @@ import xyz.playground.stl_web_app.Service.GameService;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+import static xyz.playground.stl_web_app.Constants.StringConstants.ACTIVE_TAB;
+import static xyz.playground.stl_web_app.Constants.StringConstants.PAGE_TITLE;
+import static xyz.playground.stl_web_app.Constants.StringConstants.VIEW_NAME;
+import static xyz.playground.stl_web_app.Constants.StringConstants.MAIN_LAYOUT;
+import static xyz.playground.stl_web_app.Constants.StringConstants.ROLE_HAS_ADMIN;
+import static xyz.playground.stl_web_app.Constants.StringConstants.VAR_SUCCESS_MESSAGE;
+import static xyz.playground.stl_web_app.Constants.StringConstants.VAR_ERROR_MESSAGE;
+
+
 @Controller
-@RequestMapping("/games")
 public class GameController {
+
+    public final String NEW_GAME = "newGame";
+    public final String GAMES = "games";
+
+    public final String VAR_GAME_LIST = "gameList";
+    public final String VAR_GAME_TYPES = "gameTypes";
+    public final String VAR_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm";
+    public final String VAR_FORMATTED_SCHEDULED_DATE = "formattedScheduleDate";
+    public final String VAR_FORMATTED_CUT_OFF_DATE = "formattedCutOffDate";
+
+    public final String ENDPOINT_GAMES = "/games";
+    public final String ENDPOINT_GAMES_ADD = "/games/add";
+    public final String ENDPOINT_GAMES_EDIT = "/games/edit/{id}";
+    public final String ENDPOINT_GAMES_UPDATE = "/games/update/{id}";
+    public final String ENDPOINT_GAMES_DELETE = "/games/delete/{id}";
+    public final String ENDPOINT_GAMES_EXECUTE = "/games/execute/{id}";
+    public final String ENDPOINT_GAME_LIST = "games/list";
+    public final String ENDPOINT_GAME_FORM = "games/form";
+    public final String REDIRECT_GAMES = "redirect:/games";
+
+    public final String GAMES_TITLE = "Games - View";
+    public final String GAMES_ADD_TITLE = "Games - Add Game";
+    public final String GAMES_EDIT_TITLE ="Games - Edit Game";
+
+    public final String ERROR_ADD_GAME = "Error creating game: ";
+    public final String ERROR_UPDATE_GAME = "Error updating game: ";
+    public final String ERROR_DELETE_GAME = "Error deleting game: ";
+    public final String ERROR_EXECUTE_GAME = "Error executing game: ";
+    public final String SUCCESSFUL_ADD_GAME = "Game created successfully";
+    public final String SUCCESSFUL_UPDATE_GAME = "Game updated successfully";
+    public final String SUCCESSFUL_DELETE_GAME = "Game deleted successfully";
+    public final String SUCCESSFUL_EXECUTE_GAME = "Game executed successfully";
 
     @Autowired
     private GameService gameService;
 
-    @GetMapping
+    @GetMapping(ENDPOINT_GAMES)
     public String listGames(Model model) {
-        model.addAttribute("games", gameService.getAllGames());
-        model.addAttribute("pageTitle", "Games - STL Web App");
-        model.addAttribute("activeTab", "games");
-        model.addAttribute("viewName", "games/list");
-        return "layout/main";
+        model.addAttribute(VAR_GAME_LIST, gameService.getAllGames());
+        model.addAttribute(PAGE_TITLE, GAMES_TITLE);
+        model.addAttribute(ACTIVE_TAB, GAMES);
+        model.addAttribute(VIEW_NAME, ENDPOINT_GAME_LIST);
+        return MAIN_LAYOUT;
     }
 
-    @GetMapping("/add")
-    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping(ENDPOINT_GAMES_ADD)
+    @PreAuthorize(ROLE_HAS_ADMIN)
     public String showAddForm(Model model) {
+
         Game game = new Game();
+
         // Set default values for new game
         game.setScheduleDateTime(LocalDateTime.now().plusDays(1));
         game.setCutOffDateTime(LocalDateTime.now().plusDays(1).minusHours(1));
         game.setEnabled(true);
 
-        model.addAttribute("game", game);
-        model.addAttribute("gameTypes", GameType.values());
-        model.addAttribute("pageTitle", "Add Game - STL Web App");
-        model.addAttribute("activeTab", "games");
-        model.addAttribute("viewName", "games/form");
-        return "layout/main";
-    }
-
-    @PostMapping("/add")
-    @PreAuthorize("hasRole('ADMIN')")
-    public String addGame(@ModelAttribute Game game, RedirectAttributes redirectAttributes) {
-        try {
-            gameService.createGame(game);
-            redirectAttributes.addFlashAttribute("successMessage", "Game created successfully");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error creating game: " + e.getMessage());
-        }
-        return "redirect:/games";
-    }
-
-    @GetMapping("/edit/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public String showEditForm(@PathVariable Long id, Model model) {
-        Game game = gameService.getGameById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid game Id:" + id));
-
-        // Format dates for datetime-local input
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(VAR_DATE_FORMAT);
         String formattedScheduleDate = game.getScheduleDateTime().format(formatter);
         String formattedCutOffDate = game.getCutOffDateTime().format(formatter);
 
-        model.addAttribute("game", game);
-        model.addAttribute("formattedScheduleDate", formattedScheduleDate);
-        model.addAttribute("formattedCutOffDate", formattedCutOffDate);
-        model.addAttribute("gameTypes", GameType.values());
-        model.addAttribute("pageTitle", "Edit Game - STL Web App");
-        model.addAttribute("activeTab", "games");
-        model.addAttribute("viewName", "games/form");
-        return "layout/main";
+        model.addAttribute(NEW_GAME, game);
+        model.addAttribute(VAR_FORMATTED_SCHEDULED_DATE, formattedScheduleDate);
+        model.addAttribute(VAR_FORMATTED_CUT_OFF_DATE, formattedCutOffDate);
+        model.addAttribute(VAR_GAME_TYPES, GameType.values());
+        model.addAttribute(PAGE_TITLE, GAMES_ADD_TITLE);
+        model.addAttribute(ACTIVE_TAB, GAMES);
+        model.addAttribute(VIEW_NAME, ENDPOINT_GAME_FORM);
+        return MAIN_LAYOUT;
+    }
+
+    @PostMapping(ENDPOINT_GAMES_ADD)
+    @PreAuthorize(ROLE_HAS_ADMIN)
+    public String addGame(@ModelAttribute Game game, RedirectAttributes redirectAttributes) {
+        try {
+            gameService.createGame(game);
+            redirectAttributes.addFlashAttribute(VAR_SUCCESS_MESSAGE, SUCCESSFUL_ADD_GAME);
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute(VAR_ERROR_MESSAGE, ERROR_ADD_GAME + e.getMessage());
+        }
+        return REDIRECT_GAMES;
+    }
+
+    @GetMapping(ENDPOINT_GAMES_EDIT)
+    @PreAuthorize(ROLE_HAS_ADMIN)
+    public String showEditForm(@PathVariable Long id, Model model) {
+        Game game = gameService.findGame(id);
+
+        // Format dates for datetime-local input
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(VAR_DATE_FORMAT);
+        String formattedScheduleDate = game.getScheduleDateTime().format(formatter);
+        String formattedCutOffDate = game.getCutOffDateTime().format(formatter);
+
+        model.addAttribute(NEW_GAME, game);
+        model.addAttribute(VAR_FORMATTED_SCHEDULED_DATE, formattedScheduleDate);
+        model.addAttribute(VAR_FORMATTED_CUT_OFF_DATE, formattedCutOffDate);
+        model.addAttribute(VAR_GAME_TYPES, GameType.values());
+        model.addAttribute(PAGE_TITLE, GAMES_EDIT_TITLE);
+        model.addAttribute(ACTIVE_TAB, GAMES);
+        model.addAttribute(VIEW_NAME, ENDPOINT_GAME_FORM);
+        return MAIN_LAYOUT;
     }
 
 
-    @PostMapping("/update/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping(ENDPOINT_GAMES_UPDATE)
+    @PreAuthorize(ROLE_HAS_ADMIN)
     public String updateGame(@PathVariable Long id, @ModelAttribute Game game, RedirectAttributes redirectAttributes) {
         try {
             gameService.updateGame(id, game);
-            redirectAttributes.addFlashAttribute("successMessage", "Game updated successfully");
+            redirectAttributes.addFlashAttribute(VAR_SUCCESS_MESSAGE, SUCCESSFUL_UPDATE_GAME);
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error updating game: " + e.getMessage());
+            redirectAttributes.addFlashAttribute(VAR_ERROR_MESSAGE, ERROR_UPDATE_GAME + e.getMessage());
         }
-        return "redirect:/games";
+        return REDIRECT_GAMES;
     }
 
-    @GetMapping("/delete/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping(ENDPOINT_GAMES_DELETE)
+    @PreAuthorize(ROLE_HAS_ADMIN)
     public String deleteGame(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
             gameService.deleteGame(id);
-            redirectAttributes.addFlashAttribute("successMessage", "Game deleted successfully");
+            redirectAttributes.addFlashAttribute(VAR_SUCCESS_MESSAGE, SUCCESSFUL_DELETE_GAME);
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error deleting game: " + e.getMessage());
+            redirectAttributes.addFlashAttribute(VAR_ERROR_MESSAGE, ERROR_DELETE_GAME + e.getMessage());
         }
-        return "redirect:/games";
+        return REDIRECT_GAMES;
     }
 
-    @GetMapping("/execute/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping(ENDPOINT_GAMES_EXECUTE)
+    @PreAuthorize(ROLE_HAS_ADMIN)
     public String executeGame(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
             gameService.executeGame(id);
-            redirectAttributes.addFlashAttribute("successMessage", "Game executed successfully");
+            redirectAttributes.addFlashAttribute(VAR_SUCCESS_MESSAGE, SUCCESSFUL_EXECUTE_GAME);
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error executing game: " + e.getMessage());
+            redirectAttributes.addFlashAttribute(VAR_ERROR_MESSAGE, ERROR_EXECUTE_GAME + e.getMessage());
         }
-        return "redirect:/games";
+        return REDIRECT_GAMES;
     }
 }
 
