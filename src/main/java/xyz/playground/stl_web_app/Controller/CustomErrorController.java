@@ -8,10 +8,24 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import static xyz.playground.stl_web_app.Constants.StringConstants.*;
-
 @Controller
 public class CustomErrorController implements ErrorController {
+
+    private final String ERROR = "error";
+    private final String VAR_STATUS = "status";
+    private final String VAR_ERROR = "error";
+    private final String VAR_MESSAGE = "message";
+
+    private final String ENDPOINT_ERROR = "/error";
+
+    private final String PAGE_NOT_FOUND = "Page Not Found";
+    private final String PAGE_NOT_FOUND_MESSAGE = "The page you are looking for does not exist.";
+
+    private final String ACCESS_DENIED = "Access Denied";
+    private final String ACCESS_DENIED_MESSAGE = "You don't have permission to access this resource.";
+
+    private final String INTERNAL_SERVER_ERROR = "Internal Server Error";
+    private final String INTERNAL_SERVER_ERROR_MESSAGE = "Something went wrong on our end. Please try again later.";
 
     @RequestMapping(ENDPOINT_ERROR)
     public String handleError(HttpServletRequest request, Model model) {
@@ -33,6 +47,6 @@ public class CustomErrorController implements ErrorController {
             }
         }
 
-        return "error";
+        return ERROR;
     }
 }

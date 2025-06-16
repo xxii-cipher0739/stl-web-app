@@ -14,11 +14,43 @@ import xyz.playground.stl_web_app.Service.UserService;
 import java.util.HashSet;
 import java.util.Set;
 
-import static xyz.playground.stl_web_app.Constants.StringConstants.*;
+import static xyz.playground.stl_web_app.Constants.StringConstants.ACTIVE_TAB;
+import static xyz.playground.stl_web_app.Constants.StringConstants.PAGE_TITLE;
+import static xyz.playground.stl_web_app.Constants.StringConstants.VIEW_NAME;
+import static xyz.playground.stl_web_app.Constants.StringConstants.MAIN_LAYOUT;
+import static xyz.playground.stl_web_app.Constants.StringConstants.ROLE_HAS_ADMIN;
+import static xyz.playground.stl_web_app.Constants.StringConstants.VAR_SUCCESS_MESSAGE;
+import static xyz.playground.stl_web_app.Constants.StringConstants.VAR_ERROR_MESSAGE;
 
 @Controller
 @PreAuthorize(ROLE_HAS_ADMIN)
 public class UserController {
+
+    private final String NEW_USER = "newUser";
+    private final String USERS = "users";
+
+    private final String VAR_USER_LIST = "userList";
+
+    private final String ENDPOINT_USERS = "/users";
+    private final String ENDPOINT_USERS_ADD = "/users/add";
+    private final String ENDPOINT_USERS_EDIT = "/users/edit/{id}";
+    private final String ENDPOINT_USERS_UPDATE = "/users/update/{id}";
+    private final String ENDPOINT_USERS_DELETE = "/users/delete/{id}";
+    private final String ENDPOINT_USER_LIST = "users/list";
+    private final String ENDPOINT_USER_FORM = "users/form";
+    private final String REDIRECT_USERS = "redirect:/users";
+
+    private final String USERS_TITLE = "Users - View";
+    private final String USERS_ADD_TITLE = "Users - Add User";
+    private final String USERS_EDIT_TITLE = "Users - Edit User";
+
+    private final String INVALID_USER_ID = "Invalid user id:";
+    private final String ERROR_ADD_USER = "Error creating user: ";
+    private final String ERROR_UPDATE_USER = "Error updating user: ";
+    private final String ERROR_DELETE_USER = "Error deleting user: ";
+    private final String SUCCESSFUL_ADD_USER = "User created successfully";
+    private final String SUCCESSFUL_UPDATE_USER = "User updated successfully";
+    private final String SUCCESSFUL_DELETE_USER = "User deleted successfully";
 
     @Autowired
     private UserRepository userRepository;
@@ -40,13 +72,12 @@ public class UserController {
 
     @GetMapping(ENDPOINT_USERS_ADD)
     public String showAddForm(Model model) {
-        model.addAttribute(VAR_NEW_USER, new User());
+        model.addAttribute(NEW_USER, new User());
         model.addAttribute(PAGE_TITLE, USERS_ADD_TITLE);
         model.addAttribute(ACTIVE_TAB, USERS);
         model.addAttribute(VIEW_NAME, ENDPOINT_USER_FORM);
         return MAIN_LAYOUT;
     }
-
 
     @PostMapping(ENDPOINT_USERS_ADD)
     public String addUser(@ModelAttribute User user, @RequestParam String role, RedirectAttributes redirectAttributes) {
@@ -75,7 +106,7 @@ public class UserController {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException(INVALID_USER_ID + id));
 
-        model.addAttribute(VAR_NEW_USER, user);
+        model.addAttribute(NEW_USER, user);
         model.addAttribute(PAGE_TITLE, USERS_EDIT_TITLE);
         model.addAttribute(ACTIVE_TAB, USERS);
         model.addAttribute(VIEW_NAME, ENDPOINT_USER_FORM);
@@ -104,6 +135,7 @@ public class UserController {
             userRepository.save(existingUser);
             redirectAttributes.addFlashAttribute(VAR_SUCCESS_MESSAGE, SUCCESSFUL_UPDATE_USER);
         } catch (Exception e) {
+            e.printStackTrace();
             redirectAttributes.addFlashAttribute(VAR_ERROR_MESSAGE, ERROR_UPDATE_USER + e.getMessage());
         }
 
@@ -116,6 +148,7 @@ public class UserController {
             userRepository.deleteById(id);
             redirectAttributes.addFlashAttribute(VAR_SUCCESS_MESSAGE, SUCCESSFUL_DELETE_USER);
         } catch (Exception e) {
+            e.printStackTrace();
             redirectAttributes.addFlashAttribute(VAR_ERROR_MESSAGE, ERROR_DELETE_USER + e.getMessage());
         }
         return REDIRECT_USERS;

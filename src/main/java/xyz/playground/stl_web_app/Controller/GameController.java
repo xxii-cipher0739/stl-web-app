@@ -25,37 +25,37 @@ import static xyz.playground.stl_web_app.Constants.StringConstants.VAR_ERROR_MES
 @Controller
 public class GameController {
 
-    public final String NEW_GAME = "newGame";
-    public final String GAMES = "games";
+    private final String NEW_GAME = "newGame";
+    private final String GAMES = "games";
 
-    public final String VAR_GAME_LIST = "gameList";
-    public final String VAR_GAME_TYPES = "gameTypes";
-    public final String VAR_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm";
-    public final String VAR_FORMATTED_SCHEDULED_DATE = "formattedScheduleDate";
-    public final String VAR_FORMATTED_CUT_OFF_DATE = "formattedCutOffDate";
+    private final String VAR_GAME_LIST = "gameList";
+    private final String VAR_GAME_TYPES = "gameTypes";
+    private final String VAR_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm";
+    private final String VAR_FORMATTED_SCHEDULED_DATE = "formattedScheduleDate";
+    private final String VAR_FORMATTED_CUT_OFF_DATE = "formattedCutOffDate";
 
-    public final String ENDPOINT_GAMES = "/games";
-    public final String ENDPOINT_GAMES_ADD = "/games/add";
-    public final String ENDPOINT_GAMES_EDIT = "/games/edit/{id}";
-    public final String ENDPOINT_GAMES_UPDATE = "/games/update/{id}";
-    public final String ENDPOINT_GAMES_DELETE = "/games/delete/{id}";
-    public final String ENDPOINT_GAMES_EXECUTE = "/games/execute/{id}";
-    public final String ENDPOINT_GAME_LIST = "games/list";
-    public final String ENDPOINT_GAME_FORM = "games/form";
-    public final String REDIRECT_GAMES = "redirect:/games";
+    private final String ENDPOINT_GAMES = "/games";
+    private final String ENDPOINT_GAMES_ADD = "/games/add";
+    private final String ENDPOINT_GAMES_EDIT = "/games/edit/{id}";
+    private final String ENDPOINT_GAMES_UPDATE = "/games/update/{id}";
+    private final String ENDPOINT_GAMES_DELETE = "/games/delete/{id}";
+    private final String ENDPOINT_GAMES_EXECUTE = "/games/execute/{id}";
+    private final String ENDPOINT_GAME_LIST = "games/list";
+    private final String ENDPOINT_GAME_FORM = "games/form";
+    private final String REDIRECT_GAMES = "redirect:/games";
 
-    public final String GAMES_TITLE = "Games - View";
-    public final String GAMES_ADD_TITLE = "Games - Add Game";
-    public final String GAMES_EDIT_TITLE ="Games - Edit Game";
+    private final String GAMES_TITLE = "Games - View";
+    private final String GAMES_ADD_TITLE = "Games - Add Game";
+    private final String GAMES_EDIT_TITLE ="Games - Edit Game";
 
-    public final String ERROR_ADD_GAME = "Error creating game: ";
-    public final String ERROR_UPDATE_GAME = "Error updating game: ";
-    public final String ERROR_DELETE_GAME = "Error deleting game: ";
-    public final String ERROR_EXECUTE_GAME = "Error executing game: ";
-    public final String SUCCESSFUL_ADD_GAME = "Game created successfully";
-    public final String SUCCESSFUL_UPDATE_GAME = "Game updated successfully";
-    public final String SUCCESSFUL_DELETE_GAME = "Game deleted successfully";
-    public final String SUCCESSFUL_EXECUTE_GAME = "Game executed successfully";
+    private final String ERROR_ADD_GAME = "Error creating game: ";
+    private final String ERROR_UPDATE_GAME = "Error updating game: ";
+    private final String ERROR_DELETE_GAME = "Error deleting game: ";
+    private final String ERROR_EXECUTE_GAME = "Error executing game: ";
+    private final String SUCCESSFUL_ADD_GAME = "Game created successfully";
+    private final String SUCCESSFUL_UPDATE_GAME = "Game updated successfully";
+    private final String SUCCESSFUL_DELETE_GAME = "Game deleted successfully";
+    private final String SUCCESSFUL_EXECUTE_GAME = "Game executed successfully";
 
     @Autowired
     private GameService gameService;
@@ -101,6 +101,7 @@ public class GameController {
             gameService.createGame(game);
             redirectAttributes.addFlashAttribute(VAR_SUCCESS_MESSAGE, SUCCESSFUL_ADD_GAME);
         } catch (Exception e) {
+            e.printStackTrace();
             redirectAttributes.addFlashAttribute(VAR_ERROR_MESSAGE, ERROR_ADD_GAME + e.getMessage());
         }
         return REDIRECT_GAMES;
@@ -134,6 +135,7 @@ public class GameController {
             gameService.updateGame(id, game);
             redirectAttributes.addFlashAttribute(VAR_SUCCESS_MESSAGE, SUCCESSFUL_UPDATE_GAME);
         } catch (Exception e) {
+            e.printStackTrace();
             redirectAttributes.addFlashAttribute(VAR_ERROR_MESSAGE, ERROR_UPDATE_GAME + e.getMessage());
         }
         return REDIRECT_GAMES;
@@ -146,6 +148,7 @@ public class GameController {
             gameService.deleteGame(id);
             redirectAttributes.addFlashAttribute(VAR_SUCCESS_MESSAGE, SUCCESSFUL_DELETE_GAME);
         } catch (Exception e) {
+            e.printStackTrace();
             redirectAttributes.addFlashAttribute(VAR_ERROR_MESSAGE, ERROR_DELETE_GAME + e.getMessage());
         }
         return REDIRECT_GAMES;
@@ -158,6 +161,7 @@ public class GameController {
             gameService.executeGame(id);
             redirectAttributes.addFlashAttribute(VAR_SUCCESS_MESSAGE, SUCCESSFUL_EXECUTE_GAME);
         } catch (Exception e) {
+            e.printStackTrace();
             redirectAttributes.addFlashAttribute(VAR_ERROR_MESSAGE, ERROR_EXECUTE_GAME + e.getMessage());
         }
         return REDIRECT_GAMES;

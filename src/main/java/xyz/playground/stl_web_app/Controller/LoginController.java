@@ -9,10 +9,24 @@ import xyz.playground.stl_web_app.Service.GameService;
 
 import java.util.List;
 
-import static xyz.playground.stl_web_app.Constants.StringConstants.*;
+import static xyz.playground.stl_web_app.Constants.StringConstants.ACTIVE_TAB;
+import static xyz.playground.stl_web_app.Constants.StringConstants.PAGE_TITLE;
+import static xyz.playground.stl_web_app.Constants.StringConstants.VIEW_NAME;
+import static xyz.playground.stl_web_app.Constants.StringConstants.MAIN_LAYOUT;
 
 @Controller
 public class LoginController {
+
+    private  String VAR_NEXT_GAME = "nextGame";
+
+    public static final String LOGIN = "login";
+    public static final String DASHBOARD = "dashboard";
+
+    private final String ENDPOINT_BASE = "/";
+    private final String ENDPOINT_LOGIN = "/login";
+    private final String ENDPOINT_DASHBOARD = "/dashboard";
+    private final String REDIRECT_DASHBOARD = "redirect:/dashboard";
+    private final String DASHBOARD_TITLE = "Dashboard - Game Web App";
 
     @Autowired
     private GameService gameService;
