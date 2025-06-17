@@ -46,9 +46,15 @@ public class UserService {
         return userRepository.findDispatchersAndAdmins();
     }
 
-    public User findActiveUser(Long id) {
+    public User getUserById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid user id:" + id));
+
+        return user;
+    }
+
+    public User getActiveUser(Long id) {
+        User user = getUserById(id);
 
         if (!user.isEnabled()) {
             throw new IllegalStateException("User is inactive");

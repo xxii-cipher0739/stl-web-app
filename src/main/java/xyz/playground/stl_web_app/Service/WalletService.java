@@ -40,12 +40,12 @@ public class WalletService {
 
     public void transferAmount(Long destinationId, Long sourceId, BigDecimal amount) {
         //Get existing and (source) active user for validation
-        User sourceUser = userService.findActiveUser(sourceId);
+        User sourceUser = userService.getActiveUser(sourceId);
         Wallet sourceWallet = getWalletByOwnerId(sourceUser.getId());
         BigDecimal sourceAmountOriginal = sourceWallet.getBalance();
 
         //Get existing and (destination) active user for validation
-        User destinationUser = userService.findActiveUser(destinationId);
+        User destinationUser = userService.getActiveUser(destinationId);
         Wallet destinationWallet = getWalletByOwnerId(destinationUser.getId());
         BigDecimal destinationAmountOriginal = destinationWallet.getBalance();
 
@@ -86,13 +86,13 @@ public class WalletService {
     }
 
     public void deductWallet(Long ownerId, BigDecimal amount) {
-        User user = userService.findActiveUser(ownerId);
+        User user = userService.getActiveUser(ownerId);
         Wallet wallet = getWalletByOwnerId(user.getId());
         deductAmount(wallet, amount);
     }
 
     public void increaseWallet(Long ownerId, BigDecimal amount) {
-        User user = userService.findActiveUser(ownerId);
+        User user = userService.getActiveUser(ownerId);
         Wallet wallet = getWalletByOwnerId(user.getId());
         increaseAmount(wallet, amount);
     }

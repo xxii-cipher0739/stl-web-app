@@ -10,7 +10,6 @@ import xyz.playground.stl_web_app.Model.Game;
 import xyz.playground.stl_web_app.Model.Request;
 import xyz.playground.stl_web_app.Model.Transaction;
 import xyz.playground.stl_web_app.Model.User;
-import xyz.playground.stl_web_app.Repository.UserRepository;
 import xyz.playground.stl_web_app.Service.*;
 
 import java.math.BigDecimal;
@@ -50,9 +49,6 @@ public class LoginController {
     private TransactionService transactionService;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private UserService userService;
 
     @GetMapping(ENDPOINT_LOGIN)
@@ -83,7 +79,7 @@ public class LoginController {
 
         // Enhance transactions with users name
         for (Transaction transaction : recentTransactions) {
-            User user = userRepository.findById(transaction.getPerformedBy()).orElse(null);
+            User user = userService.getUserById(transaction.getPerformedBy());
             transaction.setUserName((user != null) ? user.getName() : VAR_UNKNOWN_USER);
         }
 

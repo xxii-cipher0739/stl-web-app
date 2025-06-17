@@ -118,7 +118,7 @@ public class RequestController {
 
         // Get current user
         List<User> requestByUser = new ArrayList<>();
-        requestByUser.add(userService.findActiveUser(currentUserId));
+        requestByUser.add(userService.getActiveUser(currentUserId));
 
         // Get all dispatcher and admins only for requestTo
         List<User> requestToUsers = userService.getAllDispatchAndAdmins();
@@ -156,7 +156,7 @@ public class RequestController {
 
         // Get current user
         List<User> requestByUser = new ArrayList<>();
-        requestByUser.add(userService.findActiveUser(currentUserId));
+        requestByUser.add(userService.getActiveUser(currentUserId));
 
         // Get all dispatcher and admins only for requestTo
         List<User> requestToUsers = userService.getAllDispatchAndAdmins();
