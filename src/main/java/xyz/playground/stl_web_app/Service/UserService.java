@@ -20,9 +20,6 @@ public class UserService {
     private UserRepository userRepository;
 
     @Autowired
-    private WalletService walletService;
-
-    @Autowired
     private PasswordEncoder passwordEncoder;
 
     public User createUser(String name, String username, String password, String role) {
@@ -36,7 +33,7 @@ public class UserService {
                 roles)
         );
 
-        walletService.createWallet(createdUser.getId());
+        //walletService.createWallet(createdUser.getId());
 
         return createdUser;
     }
@@ -50,8 +47,14 @@ public class UserService {
     }
 
     public User findActiveUser(Long id) {
-        return userRepository.findById(id)
+        User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid user id:" + id));
+
+        if (!user.isEnabled()) {
+            throw new IllegalStateException("User is inactive");
+        }
+
+        return user;
     }
 
     public CustomUserDetails getCurrentUser() {

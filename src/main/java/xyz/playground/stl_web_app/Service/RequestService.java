@@ -116,9 +116,13 @@ public class RequestService {
         request.setProcessed(true);
         request.setStatus(status);
 
-        //Adjust wallets if approved
+        //Transfer amount if approved
         if (RequestStatus.APPROVED == status) {
-            walletService.adjustWallets(request.getRequestedBy(), request.getRequestedTo(), request.getAmount());
+            walletService.transferAmount(
+                    request.getRequestedBy(),
+                    request.getRequestedTo(),
+                    request.getAmount()
+            );
         }
 
         //Save request
@@ -130,8 +134,7 @@ public class RequestService {
                 TransactionType.REQUEST,
                 request.getAmount(),
                 request.getStatus().name());
-
-
+        
     }
 
     private void validateIfIsProcessed(Request request) {

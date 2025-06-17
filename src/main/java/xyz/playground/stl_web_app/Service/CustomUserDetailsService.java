@@ -20,6 +20,10 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 
+        if(!user.isEnabled()) {
+            throw new IllegalStateException("User status is inactive.");
+        }
+
         return new CustomUserDetails(user);
     }
 }

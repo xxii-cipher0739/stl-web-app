@@ -78,7 +78,8 @@ public class GameController {
         // Set default values for new game
         game.setScheduleDateTime(LocalDateTime.now().plusDays(1));
         game.setCutOffDateTime(LocalDateTime.now().plusDays(1).minusHours(1));
-        game.setEnabled(true);
+        //By default set to false
+        game.setEnabled(false);
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(VAR_DATE_FORMAT);
         String formattedScheduleDate = game.getScheduleDateTime().format(formatter);

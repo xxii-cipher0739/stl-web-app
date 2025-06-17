@@ -10,8 +10,6 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByUsername(String username);
 
-    Optional<User> findByIdAndEnabledTrue(Long id);
-
     @Query("SELECT u FROM User u WHERE 'DISPATCHER' MEMBER OF u.roles OR 'ADMIN' MEMBER OF u.roles")
     List<User> findDispatchersAndAdmins();
 }

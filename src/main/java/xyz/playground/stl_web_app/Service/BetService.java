@@ -99,7 +99,7 @@ public class BetService {
         bet.setStatus(BetStatus.PLACED);
 
         // Deduct amount from wallet
-        walletService.decreaseAmount(userId, bet.getAmount());
+        walletService.deductWallet(userId, bet.getAmount());
 
         return betRepository.save(bet);
     }
@@ -128,10 +128,10 @@ public class BetService {
             BigDecimal difference = bet.getAmount().subtract(existingBet.getAmount());
             if (difference.compareTo(BigDecimal.ZERO) > 0) {
                 // Additional amount needed
-                walletService.decreaseAmount(existingBet.getCreatedBy(), difference);
+                walletService.deductWallet(existingBet.getCreatedBy(), difference);
             } else {
                 // Refund excess
-                walletService.increaseAmount(existingBet.getCreatedBy(), difference.abs());
+                walletService.increaseWallet(existingBet.getCreatedBy(), difference.abs());
             }
         }
 
@@ -257,7 +257,7 @@ public class BetService {
         }
 
         // Refund amount to wallet
-        walletService.increaseAmount(bet.getCreatedBy(), bet.getAmount());
+        walletService.increaseWallet(bet.getCreatedBy(), bet.getAmount());
 
         // Update status
         bet.setStatus(BetStatus.CANCELLED);

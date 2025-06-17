@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import xyz.playground.stl_web_app.Model.User;
 import xyz.playground.stl_web_app.Model.Wallet;
-import xyz.playground.stl_web_app.Repository.UserRepository;
 import xyz.playground.stl_web_app.Repository.WalletRepository;
 
 import java.math.BigDecimal;
@@ -15,7 +14,7 @@ import static xyz.playground.stl_web_app.Constants.StringConstants.ADMIN_ROLE;
 public class WalletService {
 
     @Autowired
-    private UserRepository userRepository;
+    private UserService userService;
 
     @Autowired
     private WalletRepository walletRepository;
@@ -30,50 +29,91 @@ public class WalletService {
         walletRepository.save(wallet);
     }
 
-    public BigDecimal getWalletBalance(Long ownerId) {
-        return getWalletByOwnerId(ownerId).getBalance();
-    }
-
     public Wallet getWalletByOwnerId(Long ownerId) {
         return walletRepository.findByOwnerId(ownerId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid owner id: " + ownerId));
     }
 
-    public void decreaseAmount(Long ownerId, BigDecimal value) {
+    public BigDecimal getWalletBalance(Long ownerId) {
+        return getWalletByOwnerId(ownerId).getBalance();
+    }
 
-        //Get existing and active user
-        User user = userRepository.findByIdAndEnabledTrue(ownerId)
-                .orElseThrow(() -> new IllegalArgumentException("User id either inactive or not existing: " + ownerId));
+    public void transferAmount(Long destinationId, Long sourceId, BigDecimal amount) {
+        //Get existing and (source) active user for validation
+        User sourceUser = userService.findActiveUser(sourceId);
+        Wallet sourceWallet = getWalletByOwnerId(sourceUser.getId());
+        BigDecimal sourceAmountOriginal = sourceWallet.getBalance();
 
-        //Only decrease dispatcher wallet. Admin wallet are infinite
-        if (!user.hasRole(ADMIN_ROLE)) {
+        //Get existing and (destination) active user for validation
+        User destinationUser = userService.findActiveUser(destinationId);
+        Wallet destinationWallet = getWalletByOwnerId(destinationUser.getId());
+        BigDecimal destinationAmountOriginal = destinationWallet.getBalance();
 
-            Wallet wallet = walletRepository.findByOwnerId(ownerId)
-                    .orElseThrow(() -> new IllegalArgumentException("Wallet not found for owner: " + ownerId));
+        System.out.println("Source: " + sourceUser.getName() + " to Destination: " + destinationUser.getName());
+        System.out.println("source amount: " + sourceWallet.getBalance() + " to Destination: " + destinationWallet.getBalance());
 
-            BigDecimal newBalance = wallet.getBalance().subtract(value);
-
-            if (newBalance.compareTo(BigDecimal.ZERO) < 0) {
-                throw new IllegalArgumentException("Insufficient funds");
+        try {
+            //Only deduct from non-admin wallet
+            if(!sourceUser.hasRole(ADMIN_ROLE)) {
+                deductAmount(sourceWallet, amount);
             }
 
-            wallet.setBalance(newBalance);
+            System.out.println("Deducted: " + amount);
+
+            //Only add to non-admin wallet
+            if(!destinationUser.hasRole(ADMIN_ROLE)) {
+                increaseAmount(destinationWallet, amount);
+                System.out.println("Increase amount: "+ amount);
+            }
+
+        } catch (Exception e) {
+            //If an error occurs. adjust wallet back to original state
+            adjustWallet(sourceWallet, sourceAmountOriginal);
+            adjustWallet(destinationWallet, destinationAmountOriginal);
+            System.out.println("adjusted back");
+            throw e;
+        }
+
+    }
+
+    public void adjustWallet(Wallet wallet, BigDecimal amount) {
+        if (wallet.getId() != null) {
+            wallet.setBalance(amount);
             walletRepository.save(wallet);
+        } else {
+            throw new RuntimeException("Wallet does not exist: " + wallet.getId());
         }
     }
 
-    public void increaseAmount(Long ownerId, BigDecimal value) {
-        Wallet wallet = walletRepository.findByOwnerId(ownerId)
-                .orElseThrow(() -> new IllegalArgumentException("Wallet not found for owner: " + ownerId));
+    public void deductWallet(Long ownerId, BigDecimal amount) {
+        User user = userService.findActiveUser(ownerId);
+        Wallet wallet = getWalletByOwnerId(user.getId());
+        deductAmount(wallet, amount);
+    }
 
-        wallet.setBalance(wallet.getBalance().add(value));
+    public void increaseWallet(Long ownerId, BigDecimal amount) {
+        User user = userService.findActiveUser(ownerId);
+        Wallet wallet = getWalletByOwnerId(user.getId());
+        increaseAmount(wallet, amount);
+    }
+
+    private void deductAmount(Wallet wallet, BigDecimal amount) {
+        BigDecimal newBalance = wallet.getBalance().subtract(amount);
+
+        if (newBalance.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Insufficient funds");
+        }
+
+        wallet.setBalance(newBalance);
+
         walletRepository.save(wallet);
     }
 
-    public void adjustWallets(Long requestedBy, Long requestedTo, BigDecimal amount) {
-        //Decrease wallet first
-        decreaseAmount(requestedTo, amount);
-        //Increase wallet last
-        increaseAmount(requestedBy, amount);
+    private void increaseAmount(Wallet wallet, BigDecimal amount) {
+        BigDecimal newBalance = wallet.getBalance().add(amount);
+
+        wallet.setBalance(newBalance);
+
+        walletRepository.save(wallet);
     }
 }
