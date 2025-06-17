@@ -2,15 +2,15 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org">
 <body>
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2" th:text="${request.id == null ? 'New Request' : 'Edit Request'}"></h1>
+    <h1 class="h2" th:text="${newRequest.id == null ? 'New Request' : 'Edit Request'}"></h1>
 </div>
 
 <div class="row">
     <div class="col-md-6">
-        <form th:action="${request.id == null ? '/requests/add' : '/requests/update/' + request.id}" th:object="${request}" method="post">
+        <form th:action="${newRequest.id == null ? '/requests/add' : '/requests/update/' + newRequest.id}" th:object="${newRequest}" method="post">
             <input type="hidden" th:field="*{id}" />
 
-            <div class="mb-3" th:if="${request.id != null}">
+            <div class="mb-3" th:if="${newRequest.id != null}">
                 <label for="reference" class="form-label">Reference</label>
                 <input type="text" class="form-control" id="reference" th:field="*{reference}" readonly>
             </div>

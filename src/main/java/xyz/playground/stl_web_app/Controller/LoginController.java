@@ -28,6 +28,7 @@ public class LoginController {
     private final String VAR_PENDING_REQUEST = "pendingRequests";
     private final String VAR_PENDING_REQUEST_COUNT = "pendingRequestsCount";
     private final String VAR_RECENT_TRANSACTIONS = "recentTransactions";
+    private final String VAR_UNKNOWN_USER = "Unknown User";
 
     private final String LOGIN = "login";
     private final String DASHBOARD = "dashboard";
@@ -84,7 +85,7 @@ public class LoginController {
             if (user != null) {
                 transaction.setUserName(user.getName());
             } else {
-                transaction.setUserName("Unknown User");
+                transaction.setUserName(VAR_UNKNOWN_USER);
             }
         }
 

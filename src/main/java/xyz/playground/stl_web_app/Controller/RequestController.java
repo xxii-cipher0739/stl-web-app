@@ -18,19 +18,62 @@ import xyz.playground.stl_web_app.Service.RequestService;
 import java.util.ArrayList;
 import java.util.List;
 
+import static xyz.playground.stl_web_app.Constants.StringConstants.ACTIVE_TAB;
+import static xyz.playground.stl_web_app.Constants.StringConstants.PAGE_TITLE;
+import static xyz.playground.stl_web_app.Constants.StringConstants.VIEW_NAME;
+import static xyz.playground.stl_web_app.Constants.StringConstants.MAIN_LAYOUT;
+import static xyz.playground.stl_web_app.Constants.StringConstants.VAR_SUCCESS_MESSAGE;
+import static xyz.playground.stl_web_app.Constants.StringConstants.VAR_ERROR_MESSAGE;
 import static xyz.playground.stl_web_app.Constants.StringConstants.ROLE_HAS_ANY_COLLECTOR_AND_DISPATCHER;
 
 @Controller
-@RequestMapping("/requests")
+
 public class RequestController {
 
+    private final String NEW_REQUEST = "newRequest";
+    private final String REQUESTS = "requests";
+    private final String USERS = "users";
+
+    private final String VAR_REQUESTS_LIST = "requestList";
+    private final String VAR_REQUESTS_STATUSES = "requestStatuses";
+    private final String VAR_CURRENT_USER_ID = "currentUserId";
+    private final String VAR_REQUEST_BY_USERS = "requestByUser";
+    private final String VAR_REQUEST_TO_USERS = "requestToUsers";
+
+    private final String ENDPOINT_REQUESTS = "/requests";
+    private final String ENDPOINT_ADD_REQUESTS = "/requests/add";
+    private final String ENDPOINT_EDIT_REQUESTS = "/requests/edit/{id}";
+    private final String ENDPOINT_UPDATE_REQUESTS = "/requests/update/{id}";
+    private final String ENDPOINT_REJECT_REQUESTS = "/reject/{id}";
+    private final String ENDPOINT_CANCEL_REQUESTS = "/cancel/{id}";
+
+    private final String ENDPOINT_REQUESTS_LIST = "requests/list";
+    private final String ENDPOINT_REQUESTS_FORM = "requests/form";
+    private final String REDIRECT_REQUESTS = "redirect:/requests";
+
+    private final String REQUEST_TITLE = "Requests - View";
+    private final String REQUEST_TITLE_ADD = "Request - Add Request";
+    private final String REQUEST_TITLE_EDIT ="Request - Edit Request";
+
+    private final String INVALID_REQUEST_ID = "Invalid request Id:";
+    private final String ERROR_ADD_REQUEST = "Error creating request: ";
+    private final String ERROR_UPDATE_REQUEST = "Error updating request: ";
+    private final String ERROR_APPROVE_REQUEST = "Error approving request: ";
+    private final String ERROR_REJECT_REQUEST = "Error rejecting request: ";
+    private final String ERROR_CANCEL_REQUEST = "Error cancelling request: ";
+
+    private final String SUCCESSFUL_ADD_REQUEST = "Request created successfully";
+    private final String SUCCESSFUL_UPDATE_REQUEST = "Request updated successfully";
+    private final String SUCCESSFUL_APPROVE_REQUEST = "Request approved successfully";
+    private final String SUCCESSFUL_REJECT_REQUEST = "Request rejected successfully";
+    private final String SUCCESSFUL_CANCEL_REQUEST = "Request cancelled successfully";
     @Autowired
     private RequestService requestService;
 
     @Autowired
     private UserRepository userRepository;
 
-    @GetMapping
+    @GetMapping(ENDPOINT_REQUESTS)
     public String listRequests(Model model) {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -50,17 +93,17 @@ public class RequestController {
         // Get all users for display purposes
         List<User> users = userRepository.findAll();
 
-        model.addAttribute("requests", requests);
-        model.addAttribute("users", users);
-        model.addAttribute("currentUserId", currentUserId);
-        model.addAttribute("requestStatuses", RequestStatus.values());
-        model.addAttribute("pageTitle", "Requests - STL Web App");
-        model.addAttribute("activeTab", "requests");
-        model.addAttribute("viewName", "requests/list");
-        return "layout/main";
+        model.addAttribute(VAR_REQUESTS_LIST, requests);
+        model.addAttribute(USERS, users);
+        model.addAttribute(VAR_CURRENT_USER_ID, currentUserId);
+        model.addAttribute(VAR_REQUESTS_STATUSES, RequestStatus.values());
+        model.addAttribute(PAGE_TITLE, REQUEST_TITLE);
+        model.addAttribute(ACTIVE_TAB, REQUESTS);
+        model.addAttribute(VIEW_NAME, ENDPOINT_REQUESTS_LIST);
+        return MAIN_LAYOUT;
     }
 
-    @GetMapping("/add")
+    @GetMapping(ENDPOINT_ADD_REQUESTS)
     public String showAddForm(Model model) {
         Request request = new Request();
 
@@ -75,23 +118,23 @@ public class RequestController {
         List<User> requestByUser = new ArrayList<>();
         requestByUser.add(
                 userRepository.findById(currentUserId)
-                        .orElseThrow(() -> new IllegalArgumentException("Invalid request Id:" + currentUserId)));
+                        .orElseThrow(() -> new IllegalArgumentException(INVALID_REQUEST_ID + currentUserId)));
 
         // Get all dispatcher and admins only for requestTo
         List<User> requestToUsers = userRepository.findDispatchersAndAdmins();
 
-        model.addAttribute("request", request);
-        model.addAttribute("requestByUser", requestByUser);
-        model.addAttribute("requestToUsers", requestToUsers);
-        model.addAttribute("currentUserId", currentUserId);
-        model.addAttribute("requestStatuses", RequestStatus.values());
-        model.addAttribute("pageTitle", "Add Request - STL Web App");
-        model.addAttribute("activeTab", "requests");
-        model.addAttribute("viewName", "requests/form");
-        return "layout/main";
+        model.addAttribute(NEW_REQUEST, request);
+        model.addAttribute(VAR_REQUEST_BY_USERS, requestByUser);
+        model.addAttribute(VAR_REQUEST_TO_USERS, requestToUsers);
+        model.addAttribute(VAR_CURRENT_USER_ID, currentUserId);
+        model.addAttribute(VAR_REQUESTS_STATUSES, RequestStatus.values());
+        model.addAttribute(PAGE_TITLE, REQUEST_TITLE_ADD);
+        model.addAttribute(ACTIVE_TAB, REQUESTS);
+        model.addAttribute(VIEW_NAME, ENDPOINT_REQUESTS_FORM);
+        return MAIN_LAYOUT;
     }
 
-    @PostMapping("/add")
+    @PostMapping(ENDPOINT_ADD_REQUESTS)
     @PreAuthorize(ROLE_HAS_ANY_COLLECTOR_AND_DISPATCHER)
     public String addRequest(@ModelAttribute Request request, RedirectAttributes redirectAttributes) {
         try {
@@ -104,17 +147,17 @@ public class RequestController {
             request.setRequestedBy(currentUserId);
 
             requestService.createRequest(request);
-            redirectAttributes.addFlashAttribute("successMessage", "Request created successfully");
+            redirectAttributes.addFlashAttribute(VAR_SUCCESS_MESSAGE, SUCCESSFUL_ADD_REQUEST);
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error creating request: " + e.getMessage());
+            redirectAttributes.addFlashAttribute(VAR_ERROR_MESSAGE, ERROR_ADD_REQUEST + e.getMessage());
         }
-        return "redirect:/requests";
+        return REDIRECT_REQUESTS;
     }
 
-    @GetMapping("/edit/{id}")
+    @GetMapping(ENDPOINT_EDIT_REQUESTS)
     public String showEditForm(@PathVariable Long id, Model model) {
         Request request = requestService.getRequestById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid request Id:" + id));
+                .orElseThrow(() -> new IllegalArgumentException(INVALID_REQUEST_ID + id));
 
         // Get current user
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -124,17 +167,17 @@ public class RequestController {
         // Get all users for the dropdown
         List<User> users = userRepository.findAll();
 
-        model.addAttribute("request", request);
-        model.addAttribute("users", users);
-        model.addAttribute("currentUserId", currentUserId);
-        model.addAttribute("requestStatuses", RequestStatus.values());
-        model.addAttribute("pageTitle", "Edit Request - STL Web App");
-        model.addAttribute("activeTab", "requests");
-        model.addAttribute("viewName", "requests/form");
-        return "layout/main";
+        model.addAttribute(NEW_REQUEST, request);
+        model.addAttribute(USERS, users);
+        model.addAttribute(VAR_CURRENT_USER_ID, currentUserId);
+        model.addAttribute(VAR_REQUESTS_STATUSES, RequestStatus.values());
+        model.addAttribute(PAGE_TITLE, REQUEST_TITLE_EDIT);
+        model.addAttribute(ACTIVE_TAB, REQUESTS);
+        model.addAttribute(VIEW_NAME, ENDPOINT_REQUESTS_FORM);
+        return MAIN_LAYOUT;
     }
 
-    @PostMapping("/update/{id}")
+    @PostMapping(ENDPOINT_UPDATE_REQUESTS)
     public String updateRequest(@PathVariable Long id, @ModelAttribute Request request, RedirectAttributes redirectAttributes) {
         try {
             // Get current user
@@ -145,44 +188,44 @@ public class RequestController {
             request.setRequestedBy(currentUserId);
 
             requestService.updateRequest(request);
-            redirectAttributes.addFlashAttribute("successMessage", "Request updated successfully");
+            redirectAttributes.addFlashAttribute(VAR_SUCCESS_MESSAGE, SUCCESSFUL_UPDATE_REQUEST);
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error updating request: " + e.getMessage());
+            redirectAttributes.addFlashAttribute(VAR_ERROR_MESSAGE, ERROR_UPDATE_REQUEST + e.getMessage());
         }
-        return "redirect:/requests";
+        return REDIRECT_REQUESTS;
     }
 
     @GetMapping("/approve/{id}")
     public String approveRequest(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
             requestService.approveRequest(id);
-            redirectAttributes.addFlashAttribute("successMessage", "Request approved successfully");
+            redirectAttributes.addFlashAttribute(VAR_SUCCESS_MESSAGE, SUCCESSFUL_APPROVE_REQUEST);
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error approving request: " + e.getMessage());
+            redirectAttributes.addFlashAttribute(VAR_ERROR_MESSAGE, ERROR_APPROVE_REQUEST + e.getMessage());
         }
-        return "redirect:/requests";
+        return REDIRECT_REQUESTS;
     }
 
-    @GetMapping("/reject/{id}")
+    @GetMapping(ENDPOINT_REJECT_REQUESTS)
     public String rejectRequest(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
             requestService.rejectRequest(id);
-            redirectAttributes.addFlashAttribute("successMessage", "Request rejected successfully");
+            redirectAttributes.addFlashAttribute(VAR_SUCCESS_MESSAGE, SUCCESSFUL_REJECT_REQUEST);
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error rejecting request: " + e.getMessage());
+            redirectAttributes.addFlashAttribute(VAR_ERROR_MESSAGE, ERROR_REJECT_REQUEST + e.getMessage());
         }
-        return "redirect:/requests";
+        return REDIRECT_REQUESTS;
     }
 
-    @GetMapping("/cancel/{id}")
+    @GetMapping(ENDPOINT_CANCEL_REQUESTS)
     public String cancelRequest(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
             requestService.cancelRequest(id);
-            redirectAttributes.addFlashAttribute("successMessage", "Request cancelled successfully");
+            redirectAttributes.addFlashAttribute(VAR_SUCCESS_MESSAGE, SUCCESSFUL_CANCEL_REQUEST);
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error cancelling request: " + e.getMessage());
+            redirectAttributes.addFlashAttribute(VAR_ERROR_MESSAGE, ERROR_CANCEL_REQUEST + e.getMessage());
         }
-        return "redirect:/requests";
+        return REDIRECT_REQUESTS;
     }
 
     private Long getCurrentUserId(Authentication auth) {

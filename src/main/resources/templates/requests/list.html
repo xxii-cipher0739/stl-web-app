@@ -46,7 +46,7 @@
         </tr>
         </thead>
         <tbody>
-        <tr th:each="request : ${requests}">
+        <tr th:each="request : ${requestList}">
             <td th:text="${request.reference}"></td>
             <td th:text="${#temporals.format(request.dateTimeCreated, 'EEEE, MMMM dd, yyyy hh:mm a')}"></td>
             <td>
@@ -101,7 +101,7 @@
                 </a>
             </td>
         </tr>
-        <tr th:if="${#lists.isEmpty(requests)}">
+        <tr th:if="${#lists.isEmpty(requestList)}">
             <td colspan="6" class="text-center">No requests found</td>
         </tr>
         </tbody>

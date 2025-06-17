@@ -104,9 +104,14 @@ public class RequestService {
         Request request = requestRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid request Id:" + id));
 
+        if (request.isProcessed()) {
+            throw new IllegalStateException("Request already processed.");
+        }
+
         request.setProcessed(true);
         request.setStatus(status);
 
+        //Adjust wallets if approved
         if (RequestStatus.APPROVED == status) {
             walletService.adjustWallets(request.getRequestedBy(), request.getRequestedTo(), request.getAmount());
         }
