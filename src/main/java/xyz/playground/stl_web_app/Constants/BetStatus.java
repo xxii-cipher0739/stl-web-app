@@ -2,7 +2,7 @@ package xyz.playground.stl_web_app.Constants;
 
 public enum BetStatus {
     PLACED("Placed"),
-    CONFIRM("Confirmed"),
+    CONFIRMED("Confirmed"),
     CANCELLED("Cancelled"),
     WON("Won"),
     LOST("Lost");

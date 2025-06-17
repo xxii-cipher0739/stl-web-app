@@ -27,6 +27,9 @@ public class Bet {
     private Long createdBy;
 
     @Column
+    private String bettor;
+
+    @Column
     private BigDecimal amount;
 
     @Column
@@ -35,14 +38,21 @@ public class Bet {
     @Column
     private BetStatus status;
 
+    @Transient
+    private String gameType;
+
+    @Transient
+    private LocalDateTime gameSchedule;
+
     public Bet() {
     }
 
-    public Bet(Long id, String reference, Long gameId, LocalDateTime dateTimeCreated, BigDecimal amount, Long createdBy, String betNumbers, BetStatus status) {
+    public Bet(Long id, String reference, Long gameId, LocalDateTime dateTimeCreated, String bettor, BigDecimal amount, Long createdBy, String betNumbers, BetStatus status) {
         this.id = id;
         this.reference = reference;
         this.gameId = gameId;
         this.dateTimeCreated = dateTimeCreated;
+        this.bettor = bettor;
         this.createdBy = createdBy;
         this.amount = amount;
         this.betNumbers = betNumbers;
@@ -81,6 +91,14 @@ public class Bet {
         this.dateTimeCreated = dateTimeCreated;
     }
 
+    public String getBettor() {
+        return bettor;
+    }
+
+    public void setBettor(String bettor) {
+        this.bettor = bettor;
+    }
+
     public Long getCreatedBy() {
         return createdBy;
     }
@@ -111,5 +129,21 @@ public class Bet {
 
     public void setStatus(BetStatus status) {
         this.status = status;
+    }
+
+    public String getGameType() {
+        return gameType;
+    }
+
+    public void setGameType(String gameType) {
+        this.gameType = gameType;
+    }
+
+    public LocalDateTime getGameSchedule() {
+        return gameSchedule;
+    }
+
+    public void setGameSchedule(LocalDateTime gameSchedule) {
+        this.gameSchedule = gameSchedule;
     }
 }

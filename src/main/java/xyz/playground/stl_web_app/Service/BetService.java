@@ -3,6 +3,7 @@ package xyz.playground.stl_web_app.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import xyz.playground.stl_web_app.Constants.BetStatus;
+import xyz.playground.stl_web_app.Constants.GameType;
 import xyz.playground.stl_web_app.Model.Bet;
 import xyz.playground.stl_web_app.Model.Game;
 import xyz.playground.stl_web_app.Repository.BetRepository;
@@ -82,6 +83,9 @@ public class BetService {
             throw new IllegalStateException("Betting period has ended for this game");
         }
 
+        // Validate bet numbers based on game type
+        validateBetNumbers(bet.getBetNumbers(), game.getGameType());
+
         // Generate reference if not provided
         if (bet.getReference() == null || bet.getReference().isEmpty()) {
             bet.setReference(generateReference());
@@ -116,6 +120,9 @@ public class BetService {
             throw new IllegalStateException("Game is no longer open for betting");
         }
 
+        // Validate bet numbers based on game type
+        validateBetNumbers(bet.getBetNumbers(), game.getGameType());
+
         // Handle amount change
         if (bet.getAmount().compareTo(existingBet.getAmount()) != 0) {
             BigDecimal difference = bet.getAmount().subtract(existingBet.getAmount());
@@ -129,9 +136,108 @@ public class BetService {
         }
 
         // Update fields
+        existingBet.setBettor(bet.getBettor());
         existingBet.setAmount(bet.getAmount());
+        existingBet.setBetNumbers(bet.getBetNumbers());
 
         return betRepository.save(existingBet);
+    }
+
+    private void validateBetNumbers(String betNumbers, String gameType) {
+        if (betNumbers == null || betNumbers.isEmpty()) {
+            throw new IllegalArgumentException("Bet numbers cannot be empty");
+        }
+
+        GameType type = GameType.valueOf(gameType);
+
+        switch (type) {
+            case TWO_DIGIT:
+                validateTwoDigitBet(betNumbers);
+                break;
+            case THREE_DIGIT:
+                validateThreeDigitBet(betNumbers);
+                break;
+            case FOUR_DIGIT:
+                validateFourDigitBet(betNumbers);
+                break;
+            case LAST_TWO_DIGIT:
+                validateLastTwoDigitBet(betNumbers);
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid game type");
+        }
+    }
+
+    private void validateTwoDigitBet(String betNumbers) {
+        String[] parts = betNumbers.split("-");
+        if (parts.length != 2) {
+            throw new IllegalArgumentException("Two digit bet must have exactly 2 numbers");
+        }
+
+        try {
+            for (String part : parts) {
+                int num = Integer.parseInt(part);
+                if (num < 1 || num > 31) {
+                    throw new IllegalArgumentException("Two digit bet numbers must be between 1 and 31");
+                }
+            }
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid bet number format");
+        }
+    }
+
+    private void validateThreeDigitBet(String betNumbers) {
+        String[] parts = betNumbers.split("-");
+        if (parts.length != 3) {
+            throw new IllegalArgumentException("Three digit bet must have exactly 3 numbers");
+        }
+
+        try {
+            for (String part : parts) {
+                int num = Integer.parseInt(part);
+                if (num < 0 || num > 9) {
+                    throw new IllegalArgumentException("Three digit bet numbers must be between 0 and 9");
+                }
+            }
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid bet number format");
+        }
+    }
+
+    private void validateFourDigitBet(String betNumbers) {
+        String[] parts = betNumbers.split("-");
+        if (parts.length != 4) {
+            throw new IllegalArgumentException("Four digit bet must have exactly 4 numbers");
+        }
+
+        try {
+            for (String part : parts) {
+                int num = Integer.parseInt(part);
+                if (num < 0 || num > 9) {
+                    throw new IllegalArgumentException("Four digit bet numbers must be between 0 and 9");
+                }
+            }
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid bet number format");
+        }
+    }
+
+    private void validateLastTwoDigitBet(String betNumbers) {
+        String[] parts = betNumbers.split("-");
+        if (parts.length != 2) {
+            throw new IllegalArgumentException("Last two digit bet must have exactly 2 numbers");
+        }
+
+        try {
+            for (String part : parts) {
+                int num = Integer.parseInt(part);
+                if (num < 0 || num > 9) {
+                    throw new IllegalArgumentException("Last two digit bet numbers must be between 0 and 9");
+                }
+            }
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid bet number format");
+        }
     }
 
     public Bet cancelBet(Long id) {

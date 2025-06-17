@@ -7,7 +7,7 @@
 
 <div class="row">
     <div class="col-md-6">
-        <form th:action="${newBet.id == null ? '/bets/add' : '/bets/update/' + newBet.id}" th:object="${newBet}" method="post">
+        <form th:action="${newBet.id == null ? '/bets/add' : '/bets/update/' + newBet.id}" th:object="${newBet}" method="post" id="betForm">
             <input type="hidden" th:field="*{id}" />
             <input type="hidden" th:field="*{createdBy}" />
             <input type="hidden" th:field="*{reference}" th:if="${newBet.reference != null}" />
@@ -21,14 +21,34 @@
 
             <div class="mb-3">
                 <label for="gameId" class="form-label">Game</label>
-                <select class="form-select" id="gameId" th:field="*{gameId}" required th:disabled="${newBet.id != null}">
+                <select class="form-select" id="gameId" th:field="*{gameId}" required th:disabled="${newBet.id != null}" onchange="updateBetNumbersField()">
                     <option value="">Select Game</option>
                     <option th:each="game : ${games}"
                             th:value="${game.id}"
-                            th:text="${'Game #' + game.id + ' - ' + game.gameType + ' (' + #temporals.format(game.scheduleDateTime, 'MMM dd, HH:mm') + ')'}">
+                            th:text="${game.gameType + ' (' + #temporals.format(game.scheduleDateTime, 'EEEE, MMMM dd, yyyy hh:mm a') + ')'}"
+                            th:attr="data-game-type=${game.gameType}">
                     </option>
                 </select>
                 <small class="form-text text-muted" th:if="${newBet.id == null}">Select the game you want to bet on</small>
+            </div>
+
+            <div class="mb-3">
+                <label for="bettor" class="form-label">Bettor</label>
+                <input type="text" class="form-control" id="bettor" th:field="*{bettor}">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Bet Numbers</label>
+                <input type="hidden" id="betNumbers" th:field="*{betNumbers}">
+
+                <!-- Dynamic input fields container -->
+                <div id="numberInputsContainer" class="d-flex gap-2 align-items-center">
+                    <!-- Input fields will be generated here -->
+                </div>
+
+                <small id="betNumbersHelp" class="form-text text-muted">
+                    Enter your bet numbers according to the game type
+                </small>
             </div>
 
             <div class="mb-3">
@@ -67,5 +87,176 @@
         </form>
     </div>
 </div>
+
+
+
+<script th:inline="javascript">
+    // Game type configurations
+    const gameTypes = {
+        'TWO_DIGIT': {
+            digits: 2,
+            min: 1,
+            max: 31,
+            help: 'Enter two numbers between 1-31'
+        },
+        'THREE_DIGIT': {
+            digits: 3,
+            min: 0,
+            max: 9,
+            help: 'Enter three digits (0-9)'
+        },
+        'FOUR_DIGIT': {
+            digits: 4,
+            min: 0,
+            max: 9,
+            help: 'Enter four digits (0-9)'
+        },
+        'LAST_TWO_DIGIT': {
+            digits: 2,
+            min: 0,
+            max: 9,
+            help: 'Enter two digits (0-9)'
+        }
+    };
+
+    // Get selected game type if editing
+    const selectedGameType = /*[[${selectedGameType}]]*/ null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize bet numbers field based on selected game
+        updateBetNumbersField();
+
+        // Add event listener for game selection change
+        document.getElementById('gameId').addEventListener('change', updateBetNumbersField);
+
+        // Add form validation
+        document.getElementById('betForm').addEventListener('submit', function(event) {
+            // Update the hidden field with concatenated values
+            updateHiddenField();
+
+            if (!validateBetNumbers()) {
+                event.preventDefault();
+            }
+        });
+
+        // If editing, populate the input fields
+        if (document.getElementById('betNumbers').value) {
+            populateInputFields();
+        }
+    });
+
+    function getCurrentGameType() {
+        const gameSelect = document.getElementById('gameId');
+
+        if (gameSelect.disabled) {
+            // For edit mode, use the selected game type from server
+            return selectedGameType;
+        } else if (gameSelect.selectedIndex > 0) {
+            // For new bet, get game type from selected option
+            const selectedOption = gameSelect.options[gameSelect.selectedIndex];
+            return selectedOption.getAttribute('data-game-type');
+        }
+
+        return null;
+    }
+
+    function updateBetNumbersField() {
+        const container = document.getElementById('numberInputsContainer');
+        const betNumbersHelp = document.getElementById('betNumbersHelp');
+        const gameType = getCurrentGameType();
+
+        // Clear container
+        container.innerHTML = '';
+
+        if (!gameType || !gameTypes[gameType]) {
+            betNumbersHelp.textContent = 'Select a game first';
+            return;
+        }
+
+        const config = gameTypes[gameType];
+        betNumbersHelp.textContent = config.help;
+
+        // Create input fields based on game type
+        for (let i = 0; i < config.digits; i++) {
+            // Create input element
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.className = 'form-control digit-input';
+            input.min = config.min;
+            input.max = config.max;
+            input.required = true;
+            input.style.width = '70px';
+            input.setAttribute('data-index', i);
+
+            // Add event listener to move to next input when filled
+            input.addEventListener('input', function() {
+                if (this.value.length >= this.max.toString().length) {
+                    const nextInput = this.parentNode.querySelector(`[data-index="${parseInt(this.dataset.index) + 1}"]`);
+                    if (nextInput) {
+                        nextInput.focus();
+                    }
+                }
+            });
+
+            container.appendChild(input);
+
+            // Add separator except after the last input
+            if (i < config.digits - 1) {
+                const separator = document.createElement('span');
+                separator.textContent = '-';
+                separator.className = 'align-self-center';
+                container.appendChild(separator);
+            }
+        }
+
+        // Populate fields if editing
+        populateInputFields();
+    }
+
+    function populateInputFields() {
+        const betNumbersValue = document.getElementById('betNumbers').value;
+        if (!betNumbersValue) return;
+
+        const parts = betNumbersValue.split('-');
+        const inputs = document.querySelectorAll('.digit-input');
+
+        inputs.forEach((input, index) => {
+            if (index < parts.length) {
+                input.value = parts[index];
+            }
+        });
+    }
+
+    function updateHiddenField() {
+        const inputs = document.querySelectorAll('.digit-input');
+        const values = Array.from(inputs).map(input => input.value);
+        document.getElementById('betNumbers').value = values.join('-');
+    }
+
+    function validateBetNumbers() {
+        const gameType = getCurrentGameType();
+        if (!gameType) {
+            alert('Please select a game');
+            return false;
+        }
+
+        const config = gameTypes[gameType];
+        const inputs = document.querySelectorAll('.digit-input');
+
+        for (let i = 0; i < inputs.length; i++) {
+            const value = parseInt(inputs[i].value);
+
+            if (isNaN(value) || value < config.min || value > config.max) {
+                alert(`Number ${i+1} must be between ${config.min} and ${config.max}`);
+                inputs[i].focus();
+                return false;
+            }
+        }
+
+        return true;
+    }
+</script>
+
+
 </body>
 </html>

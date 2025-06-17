@@ -9,6 +9,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import xyz.playground.stl_web_app.Constants.BetStatus;
+import xyz.playground.stl_web_app.Constants.GameType;
 import xyz.playground.stl_web_app.Model.Bet;
 import xyz.playground.stl_web_app.Model.Game;
 import xyz.playground.stl_web_app.Model.User;
@@ -17,7 +18,9 @@ import xyz.playground.stl_web_app.Service.BetService;
 import xyz.playground.stl_web_app.Model.CustomUserDetails;
 import xyz.playground.stl_web_app.Service.GameService;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static xyz.playground.stl_web_app.Constants.StringConstants.*;
 
@@ -84,6 +87,29 @@ public class BetController {
         // Get all users for display purposes (admin only)
         List<User> users = userRepository.findAll();
 
+        //DP: Search for game and update Bet details (game type and game schedule)
+        List<Game> games = new ArrayList<>();
+        for (Bet bet : bets) {
+            boolean isFound = false;
+            Game matchedGame = new Game();
+
+            for (Game game : games) {
+                if (Objects.equals(game.getId(), bet.getGameId())) {
+                    matchedGame = game;
+                    isFound = true;
+                    break;
+                }
+            }
+
+            if (!isFound) {
+                matchedGame = gameService.findGame(bet.getGameId());
+                games.add(matchedGame);
+            }
+
+            bet.setGameType(matchedGame.getGameTypeValue());
+            bet.setGameSchedule(matchedGame.getScheduleDateTime());
+        }
+
         model.addAttribute(VAR_BET_LIST, bets);
         model.addAttribute(VAR_USERS, users);
         model.addAttribute(VAR_BET_STATUSES, BetStatus.values());
@@ -109,6 +135,7 @@ public class BetController {
 
         model.addAttribute(NEW_BET, bet);
         model.addAttribute(VAR_GAMES, activeGames);
+        model.addAttribute("gameTypes", GameType.values());
         model.addAttribute(PAGE_TITLE, BETS_ADD_TITLE);
         model.addAttribute(ACTIVE_TAB, BETS);
         model.addAttribute(VIEW_NAME, ENDPOINT_BET_FORM);
@@ -124,6 +151,7 @@ public class BetController {
             CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
             Long currentUserId = userDetails.getId();
 
+            System.out.println("bet: " + bet.getBettor());
             betService.createBet(bet, currentUserId);
             redirectAttributes.addFlashAttribute(VAR_SUCCESS_MESSAGE, SUCCESSFUL_ADD_BET);
         } catch (Exception e) {
@@ -152,8 +180,13 @@ public class BetController {
         // Get active games for dropdown
         List<Game> activeGames = gameService.getActiveGames();
 
+        // Get the game type for the selected game
+        Game selectedGame = gameService.findGame(bet.getGameId());
+
         model.addAttribute(NEW_BET, bet);
         model.addAttribute(VAR_GAMES, activeGames);
+        model.addAttribute("selectedGameType", selectedGame.getGameType());
+        model.addAttribute("gameTypes", GameType.values());
         model.addAttribute(PAGE_TITLE, BETS_EDIT_TITLE);
         model.addAttribute(ACTIVE_TAB, BETS);
         model.addAttribute(VIEW_NAME, ENDPOINT_BET_FORM);
@@ -168,6 +201,8 @@ public class BetController {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
             Long currentUserId = userDetails.getId();
+
+            System.out.println("bet: " + bet.getBettor());
 
             // Check if user owns this bet or is admin
             Bet existingBet = betService.findBet(id);
