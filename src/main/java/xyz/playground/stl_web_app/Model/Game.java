@@ -13,7 +13,7 @@ public class Game {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column
     private LocalDateTime scheduleDateTime;
 
     @Column(nullable = false)

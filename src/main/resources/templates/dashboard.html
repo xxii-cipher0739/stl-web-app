@@ -29,7 +29,7 @@
             <div class="card-body">
                 <h5 class="card-title">Current Balance</h5>
                 <p class="card-text display-6">
-                    <span th:text="${walletBalance}"></span> <sub> Php </sub>
+                    ₱ <span th:text="${walletBalance}"></span>
                 </p>
             </div>
         </div>
@@ -66,8 +66,7 @@
         <div class="card text-white bg-success">
             <div class="card-body">
                 <h5 class="card-title">Overall Total Bets</h5>
-                <p class="card-text display-6">5,280
-                    <sub> Php </sub>
+                <p class="card-text display-6">₱ 5,280
                 </p>
             </div>
         </div>
@@ -104,7 +103,7 @@
             <td th:text="${transaction.userName}"></td>
             <td th:text="${transaction.transactionType}"></td>
             <td>
-               Php <span th:text="${transaction.amount}"></span>
+                ₱ <span th:text="${transaction.amount}"></span>
             </td>
             <td th:text="${#temporals.format(transaction.datetimeStamp, 'EEEE, MMMM dd, yyyy hh:mm a')}"></td>
             <td>

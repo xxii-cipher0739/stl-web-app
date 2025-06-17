@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org">
+<body>
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2" th:text="${newBet.id == null ? 'Place New Bet' : 'Edit Bet'}"></h1>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <form th:action="${newBet.id == null ? '/bets/add' : '/bets/update/' + newBet.id}" th:object="${newBet}" method="post">
+            <input type="hidden" th:field="*{id}" />
+            <input type="hidden" th:field="*{createdBy}" />
+            <input type="hidden" th:field="*{reference}" th:if="${newBet.reference != null}" />
+            <input type="hidden" th:field="*{dateTimeCreated}" th:if="${newBet.dateTimeCreated != null}" />
+            <input type="hidden" th:field="*{status}" th:if="${newBet.status != null}" />
+
+            <div class="mb-3" th:if="${newBet.reference != null}">
+                <label for="reference" class="form-label">Reference</label>
+                <input type="text" class="form-control" id="reference" th:value="${newBet.reference}" readonly>
+            </div>
+
+            <div class="mb-3">
+                <label for="gameId" class="form-label">Game</label>
+                <select class="form-select" id="gameId" th:field="*{gameId}" required th:disabled="${newBet.id != null}">
+                    <option value="">Select Game</option>
+                    <option th:each="game : ${games}"
+                            th:value="${game.id}"
+                            th:text="${'Game #' + game.id + ' - ' + game.gameType + ' (' + #temporals.format(game.scheduleDateTime, 'MMM dd, HH:mm') + ')'}">
+                    </option>
+                </select>
+                <small class="form-text text-muted" th:if="${newBet.id == null}">Select the game you want to bet on</small>
+            </div>
+
+            <div class="mb-3">
+                <label for="amount" class="form-label">Bet Amount</label>
+                <div class="input-group">
+                    <span class="input-group-text">₱</span>
+                    <input type="number" class="form-control" id="amount" th:field="*{amount}" step="0.01" min="1" required>
+                </div>
+                <small class="form-text text-muted">Enter the amount you want to bet</small>
+            </div>
+
+            <div class="mb-3" th:if="${newBet.dateTimeCreated != null}">
+                <label for="dateTimeCreated" class="form-label">Date Created</label>
+                <input type="text" class="form-control" id="dateTimeCreated"
+                       th:value="${#temporals.format(newBet.dateTimeCreated, 'yyyy-MM-dd HH:mm')}" readonly>
+            </div>
+
+            <div class="mb-3" th:if="${newBet.status != null}">
+                <label for="status" class="form-label">Status</label>
+                <input type="text" class="form-control" id="status" th:value="${newBet.status}" readonly>
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-save" viewBox="0 0 16 16">
+                    <path d="M2 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H9.5a1 1 0 0 0-1 1v7.293l2.646-2.647a.5.5 0 0 1 .708.708l-3.5 3.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L7.5 9.293V2a2 2 0 0 1 2-2H14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h2.5a.5.5 0 0 1 0 1z"/>
+                </svg>
+                Save
+            </button>
+            <a th:href="@{/bets}" class="btn btn-secondary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-circle" viewBox="0 0 16 16">
+                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
+                </svg>
+                Cancel
+            </a>
+        </form>
+    </div>
+</div>
+</body>
+</html>

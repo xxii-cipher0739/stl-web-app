@@ -56,7 +56,7 @@
                 <span th:each="user : ${users}" th:if="${user.id == request.requestedTo}" th:text="${user.name}"></span>
             </td>
             <td>
-                PHP <span th:text="${request.amount}"></span>
+                ₱ <span th:text="${request.amount}"></span>
             </td>
             <td>
                 <span th:if="${request.status == T(xyz.playground.stl_web_app.Constants.RequestStatus).PENDING}" class="badge bg-primary">Pending</span>
