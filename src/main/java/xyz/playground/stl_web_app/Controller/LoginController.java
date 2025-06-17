@@ -6,19 +6,17 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import xyz.playground.stl_web_app.Model.*;
+import xyz.playground.stl_web_app.Model.Game;
+import xyz.playground.stl_web_app.Model.Request;
+import xyz.playground.stl_web_app.Model.Transaction;
+import xyz.playground.stl_web_app.Model.User;
 import xyz.playground.stl_web_app.Repository.UserRepository;
-import xyz.playground.stl_web_app.Service.GameService;
-import xyz.playground.stl_web_app.Service.RequestService;
-import xyz.playground.stl_web_app.Service.TransactionService;
-import xyz.playground.stl_web_app.Service.WalletService;
+import xyz.playground.stl_web_app.Service.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
-import static xyz.playground.stl_web_app.Constants.StringConstants.ACTIVE_TAB;
-import static xyz.playground.stl_web_app.Constants.StringConstants.PAGE_TITLE;
-import static xyz.playground.stl_web_app.Constants.StringConstants.VIEW_NAME;
-import static xyz.playground.stl_web_app.Constants.StringConstants.MAIN_LAYOUT;
+import static xyz.playground.stl_web_app.Constants.StringConstants.*;
 
 @Controller
 public class LoginController {
@@ -54,6 +52,9 @@ public class LoginController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private UserService userService;
+
     @GetMapping(ENDPOINT_LOGIN)
     public String login() {
         return LOGIN;
@@ -63,33 +64,32 @@ public class LoginController {
     @GetMapping(ENDPOINT_DASHBOARD)
     public String dashboard(Model model) {
 
-        // Get current user
+        //Get current User
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
-        Long currentUserId = userDetails.getId();
+        Long currentUserId = userService.getCurrentUserId(auth);
 
         // Get recent transactions
-        List<Transaction> recentTransactions;
+        List<Transaction> recentTransactions
+                =
+                (auth.getAuthorities()
+                        .stream()
+                        .anyMatch(a -> a.getAuthority().equals(ROLE_ + ADMIN_ROLE))
+                )
+                // If admin, show all transactions
+                ? transactionService.getRecentTransactions(15)
+                // For regular users, show only their transactions
+                : transactionService.getRecentTransactionsByUserId(currentUserId, 15);
 
-        // If admin, show all transactions
-        if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
-            recentTransactions = transactionService.getRecentTransactions(15);
-        } else {
-            // For regular users, show only their transactions
-            recentTransactions = transactionService.getRecentTransactionsByUserId(currentUserId, 15);
-        }
 
         // Enhance transactions with users name
         for (Transaction transaction : recentTransactions) {
             User user = userRepository.findById(transaction.getPerformedBy()).orElse(null);
-            if (user != null) {
-                transaction.setUserName(user.getName());
-            } else {
-                transaction.setUserName(VAR_UNKNOWN_USER);
-            }
+            transaction.setUserName((user != null) ? user.getName() : VAR_UNKNOWN_USER);
         }
 
-        // Get pending requests for current user
+        //TODO: Improve query for pending request
+
+        //Get pending requests for current user
         List<Request> pendingRequests = requestService.getPendingRequestsForUser(currentUserId);
 
         // Get upcoming games
@@ -97,10 +97,10 @@ public class LoginController {
         Game nextGame = upcomingGames.isEmpty() ? null : upcomingGames.get(0);
 
         // Get current wallet balance
-        Wallet wallet = walletService.getWalletByOwnerId(currentUserId);
+        BigDecimal balance = walletService.getWalletBalance(currentUserId);
 
         model.addAttribute(VAR_RECENT_TRANSACTIONS, recentTransactions);
-        model.addAttribute(VAR_WALLET_BALANCE, wallet.getBalance());
+        model.addAttribute(VAR_WALLET_BALANCE, balance);
         model.addAttribute(VAR_PENDING_REQUEST, pendingRequests);
         model.addAttribute(VAR_PENDING_REQUEST_COUNT, pendingRequests.size());
         model.addAttribute(VAR_NEXT_GAME, nextGame);

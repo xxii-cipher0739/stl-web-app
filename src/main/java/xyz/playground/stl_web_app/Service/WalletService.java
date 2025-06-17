@@ -23,18 +23,25 @@ public class WalletService {
     public void createWallet(Long userId) {
 
         Wallet wallet = new Wallet();
+
         wallet.setOwnerId(userId);
         wallet.setBalance(new BigDecimal(0));
 
         walletRepository.save(wallet);
     }
 
+    public BigDecimal getWalletBalance(Long ownerId) {
+        return getWalletByOwnerId(ownerId).getBalance();
+    }
+
     public Wallet getWalletByOwnerId(Long ownerId) {
-        return walletRepository.findByOwnerId(ownerId).orElseThrow(() -> new IllegalArgumentException("Invalid owner id: " + ownerId));
+        return walletRepository.findByOwnerId(ownerId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid owner id: " + ownerId));
     }
 
     public void decreaseAmount(Long ownerId, BigDecimal value) {
 
+        //Get existing and active user
         User user = userRepository.findByIdAndEnabledTrue(ownerId)
                 .orElseThrow(() -> new IllegalArgumentException("User id either inactive or not existing: " + ownerId));
 

@@ -9,11 +9,11 @@ import xyz.playground.stl_web_app.Repository.RequestRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
 public class RequestService {
+
     @Autowired
     private RequestRepository requestRepository;
 
@@ -23,12 +23,16 @@ public class RequestService {
     @Autowired
     private TransactionService transactionService;
 
+    @Autowired
+    private UserService userService;
+
     public List<Request> getAllRequests() {
         return requestRepository.findAll();
     }
 
-    public Optional<Request> getRequestById(Long id) {
-        return requestRepository.findById(id);
+    public Request getRequestById(Long id) {
+        return requestRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid request Id:" + id));
     }
 
     public List<Request> getRequestsByRequestedBy(Long userId) {
@@ -51,63 +55,64 @@ public class RequestService {
         return requestRepository.findByProcessed(false);
     }
 
-    public Request createRequest(Request request) {
+    public void createRequest(Request request) {
+
         // Generate reference if not provided
         if (request.getReference() == null || request.getReference().isEmpty()) {
             request.setReference(generateReference());
         }
 
-        // Set Date Time now as created date
-        request.setDateTimeCreated(LocalDateTime.now());
+        //Set current user as requestor
+        request.setRequestedBy(userService.getCurrentUserId());
 
         // Set processed to false for new requests
         request.setProcessed(false);
+        // Set Date Time now as created date
+        request.setDateTimeCreated(LocalDateTime.now());
 
         // Set initial status to PENDING
-        if (request.getStatus() == null) {
-            request.setStatus(RequestStatus.PENDING);
-        }
+        request.setStatus(RequestStatus.PENDING);
 
+        //Save request
         Request createdRequest = requestRepository.save(request);
 
+        //Save transaction
         transactionService.createTransaction(
                 createdRequest.getReference(),
                 TransactionType.REQUEST,
                 createdRequest.getAmount(),
                 createdRequest.getStatus().name());
 
-        return createdRequest;
     }
 
-    public Request updateRequest(Request request) {
-        return requestRepository.save(request);
+    public Request validateUpdateRequest(Long id, Request request) {
+
+        //Get Request
+        Request existingRequest = getRequestById(id);
+
+        //Validate if request is already processed
+        validateIfIsProcessed(request);
+
+        //Update requestedBy, status, and date time created
+        request.setRequestedBy(existingRequest.getRequestedBy());
+        request.setStatus(existingRequest.getStatus());
+        request.setDateTimeCreated(existingRequest.getDateTimeCreated());
+
+        return request;
+    }
+    public void updateRequest(Request request) {
+        requestRepository.save(request);
     }
 
-    public Request approveRequest(Long id) {
-        return processRequest(id, RequestStatus.APPROVED);
-    }
+    public void processRequest(Long id, RequestStatus status) {
 
-    public Request rejectRequest(Long id) {
-        return processRequest(id, RequestStatus.REJECTED);
-    }
+        //Get request
+        Request request = getRequestById(id);
 
-    public Request cancelRequest(Long id) {
-        return processRequest(id, RequestStatus.CANCELLED);
-    }
+        //Validate if request is already processed
+        validateIfIsProcessed(request);
 
-    private String generateReference() {
-        // Generate a unique reference code (REQ-UUID)
-        return TransactionType.REQUEST.getValue() + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-    }
-
-    private Request processRequest(Long id, RequestStatus status) {
-        Request request = requestRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid request Id:" + id));
-
-        if (request.isProcessed()) {
-            throw new IllegalStateException("Request already processed.");
-        }
-
+        //Update process and status
         request.setProcessed(true);
         request.setStatus(status);
 
@@ -116,12 +121,27 @@ public class RequestService {
             walletService.adjustWallets(request.getRequestedBy(), request.getRequestedTo(), request.getAmount());
         }
 
+        //Save request
+        requestRepository.save(request);
+
+        //Save transaction
         transactionService.createTransaction(
                 request.getReference(),
                 TransactionType.REQUEST,
                 request.getAmount(),
                 request.getStatus().name());
 
-        return requestRepository.save(request);
+
+    }
+
+    private void validateIfIsProcessed(Request request) {
+        if (request.isProcessed()) {
+            throw new IllegalStateException("Request already processed.");
+        }
+    }
+
+    private String generateReference() {
+        // Generate a unique reference code (REQ-UUID)
+        return TransactionType.REQUEST.getValue() + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 }

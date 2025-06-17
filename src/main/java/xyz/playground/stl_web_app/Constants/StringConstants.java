@@ -11,6 +11,7 @@ public class StringConstants {
     public static final String VAR_SUCCESS_MESSAGE = "successMessage";
     public static final String VAR_ERROR_MESSAGE = "errorMessage";
 
+    public static final String ROLE_ = "ROLE_";
     public static final String ADMIN_ROLE = "ADMIN";
     public static final String DISPATCHER_ROLE = "DISPATCHER";
     public static final String COLLECTOR_ROLE = "COLLECTOR";

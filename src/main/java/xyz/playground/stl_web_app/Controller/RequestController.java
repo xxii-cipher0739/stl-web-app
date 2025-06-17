@@ -6,25 +6,25 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import xyz.playground.stl_web_app.Constants.RequestStatus;
+import xyz.playground.stl_web_app.Model.CustomUserDetails;
 import xyz.playground.stl_web_app.Model.Request;
 import xyz.playground.stl_web_app.Model.User;
-import xyz.playground.stl_web_app.Repository.UserRepository;
-import xyz.playground.stl_web_app.Model.CustomUserDetails;
 import xyz.playground.stl_web_app.Service.RequestService;
+import xyz.playground.stl_web_app.Service.UserService;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.function.Consumer;
 
-import static xyz.playground.stl_web_app.Constants.StringConstants.ACTIVE_TAB;
-import static xyz.playground.stl_web_app.Constants.StringConstants.PAGE_TITLE;
-import static xyz.playground.stl_web_app.Constants.StringConstants.VIEW_NAME;
-import static xyz.playground.stl_web_app.Constants.StringConstants.MAIN_LAYOUT;
-import static xyz.playground.stl_web_app.Constants.StringConstants.VAR_SUCCESS_MESSAGE;
-import static xyz.playground.stl_web_app.Constants.StringConstants.VAR_ERROR_MESSAGE;
-import static xyz.playground.stl_web_app.Constants.StringConstants.ROLE_HAS_ANY_COLLECTOR_AND_DISPATCHER;
+import static xyz.playground.stl_web_app.Constants.RequestStatus.*;
+import static xyz.playground.stl_web_app.Constants.StringConstants.*;
 
 @Controller
 
@@ -44,8 +44,9 @@ public class RequestController {
     private final String ENDPOINT_ADD_REQUESTS = "/requests/add";
     private final String ENDPOINT_EDIT_REQUESTS = "/requests/edit/{id}";
     private final String ENDPOINT_UPDATE_REQUESTS = "/requests/update/{id}";
-    private final String ENDPOINT_REJECT_REQUESTS = "/reject/{id}";
-    private final String ENDPOINT_CANCEL_REQUESTS = "/cancel/{id}";
+    private final String ENDPOINT_APPROVE_REQUESTS = "/requests/approve/{id}";
+    private final String ENDPOINT_REJECT_REQUESTS = "/requests/reject/{id}";
+    private final String ENDPOINT_CANCEL_REQUESTS = "/requests/cancel/{id}";
 
     private final String ENDPOINT_REQUESTS_LIST = "requests/list";
     private final String ENDPOINT_REQUESTS_FORM = "requests/form";
@@ -55,7 +56,6 @@ public class RequestController {
     private final String REQUEST_TITLE_ADD = "Request - Add Request";
     private final String REQUEST_TITLE_EDIT ="Request - Edit Request";
 
-    private final String INVALID_REQUEST_ID = "Invalid request Id:";
     private final String ERROR_ADD_REQUEST = "Error creating request: ";
     private final String ERROR_UPDATE_REQUEST = "Error updating request: ";
     private final String ERROR_APPROVE_REQUEST = "Error approving request: ";
@@ -67,31 +67,34 @@ public class RequestController {
     private final String SUCCESSFUL_APPROVE_REQUEST = "Request approved successfully";
     private final String SUCCESSFUL_REJECT_REQUEST = "Request rejected successfully";
     private final String SUCCESSFUL_CANCEL_REQUEST = "Request cancelled successfully";
+
     @Autowired
     private RequestService requestService;
 
     @Autowired
-    private UserRepository userRepository;
+    private UserService userService;
 
     @GetMapping(ENDPOINT_REQUESTS)
     public String listRequests(Model model) {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        Long currentUserId = getCurrentUserId(auth);
+        Long currentUserId = userService.getCurrentUserId(auth);
 
         List<Request> requests;
 
-        // If admin, show all requests
-        if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+        //If admin, show all requests
+        if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals(ROLE_ + ADMIN_ROLE))) {
             requests = requestService.getAllRequests();
         } else {
-            // For regular users, show requests they're involved in
             requests = requestService.getRequestsByRequestedBy(currentUserId);
             requests.addAll(requestService.getRequestsByRequestedTo(currentUserId));
         }
 
-        // Get all users for display purposes
-        List<User> users = userRepository.findAll();
+        // Get all users for display purposes (including non-active)
+        List<User> users = userService.getAllUsers();
+
+        //Sort request from latest descending
+        requests.sort(Comparator.comparing(Request::getDateTimeCreated).reversed());
 
         model.addAttribute(VAR_REQUESTS_LIST, requests);
         model.addAttribute(USERS, users);
@@ -105,23 +108,20 @@ public class RequestController {
 
     @GetMapping(ENDPOINT_ADD_REQUESTS)
     public String showAddForm(Model model) {
+
         Request request = new Request();
 
-        // Get current user
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        Long currentUserId = getCurrentUserId(auth);
+        Long currentUserId = userService.getCurrentUserId();
 
         // Set the requestedBy field to current user
         request.setRequestedBy(currentUserId);
 
         // Get current user
         List<User> requestByUser = new ArrayList<>();
-        requestByUser.add(
-                userRepository.findById(currentUserId)
-                        .orElseThrow(() -> new IllegalArgumentException(INVALID_REQUEST_ID + currentUserId)));
+        requestByUser.add(userService.findActiveUser(currentUserId));
 
         // Get all dispatcher and admins only for requestTo
-        List<User> requestToUsers = userRepository.findDispatchersAndAdmins();
+        List<User> requestToUsers = userService.getAllDispatchAndAdmins();
 
         model.addAttribute(NEW_REQUEST, request);
         model.addAttribute(VAR_REQUEST_BY_USERS, requestByUser);
@@ -137,38 +137,33 @@ public class RequestController {
     @PostMapping(ENDPOINT_ADD_REQUESTS)
     @PreAuthorize(ROLE_HAS_ANY_COLLECTOR_AND_DISPATCHER)
     public String addRequest(@ModelAttribute Request request, RedirectAttributes redirectAttributes) {
-        try {
-
-            // Get current user
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            Long currentUserId = getCurrentUserId(auth);
-
-            // Set the requestedBy field to current user
-            request.setRequestedBy(currentUserId);
-
-            requestService.createRequest(request);
-            redirectAttributes.addFlashAttribute(VAR_SUCCESS_MESSAGE, SUCCESSFUL_ADD_REQUEST);
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute(VAR_ERROR_MESSAGE, ERROR_ADD_REQUEST + e.getMessage());
-        }
-        return REDIRECT_REQUESTS;
+        return handleRequest(
+                value -> requestService.createRequest(value),
+                request,
+                redirectAttributes,
+                SUCCESSFUL_ADD_REQUEST,
+                ERROR_ADD_REQUEST);
     }
 
     @GetMapping(ENDPOINT_EDIT_REQUESTS)
     public String showEditForm(@PathVariable Long id, Model model) {
-        Request request = requestService.getRequestById(id)
-                .orElseThrow(() -> new IllegalArgumentException(INVALID_REQUEST_ID + id));
+        Request request = requestService.getRequestById(id);
 
         // Get current user
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
         Long currentUserId = userDetails.getId();
 
-        // Get all users for the dropdown
-        List<User> users = userRepository.findAll();
+        // Get current user
+        List<User> requestByUser = new ArrayList<>();
+        requestByUser.add(userService.findActiveUser(currentUserId));
+
+        // Get all dispatcher and admins only for requestTo
+        List<User> requestToUsers = userService.getAllDispatchAndAdmins();
 
         model.addAttribute(NEW_REQUEST, request);
-        model.addAttribute(USERS, users);
+        model.addAttribute(VAR_REQUEST_BY_USERS, requestByUser);
+        model.addAttribute(VAR_REQUEST_TO_USERS, requestToUsers);
         model.addAttribute(VAR_CURRENT_USER_ID, currentUserId);
         model.addAttribute(VAR_REQUESTS_STATUSES, RequestStatus.values());
         model.addAttribute(PAGE_TITLE, REQUEST_TITLE_EDIT);
@@ -179,58 +174,52 @@ public class RequestController {
 
     @PostMapping(ENDPOINT_UPDATE_REQUESTS)
     public String updateRequest(@PathVariable Long id, @ModelAttribute Request request, RedirectAttributes redirectAttributes) {
-        try {
-            // Get current user
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            Long currentUserId = getCurrentUserId(auth);
 
-            // Set the requestedBy field to current user
-            request.setRequestedBy(currentUserId);
-
-            requestService.updateRequest(request);
-            redirectAttributes.addFlashAttribute(VAR_SUCCESS_MESSAGE, SUCCESSFUL_UPDATE_REQUEST);
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute(VAR_ERROR_MESSAGE, ERROR_UPDATE_REQUEST + e.getMessage());
-        }
-        return REDIRECT_REQUESTS;
+        return handleRequest(
+                value -> requestService.updateRequest(value),
+                requestService.validateUpdateRequest(id, request),
+                redirectAttributes,
+                SUCCESSFUL_UPDATE_REQUEST,
+                ERROR_UPDATE_REQUEST);
     }
 
-    @GetMapping("/approve/{id}")
+    @GetMapping(ENDPOINT_APPROVE_REQUESTS)
     public String approveRequest(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        try {
-            requestService.approveRequest(id);
-            redirectAttributes.addFlashAttribute(VAR_SUCCESS_MESSAGE, SUCCESSFUL_APPROVE_REQUEST);
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute(VAR_ERROR_MESSAGE, ERROR_APPROVE_REQUEST + e.getMessage());
-        }
-        return REDIRECT_REQUESTS;
+        return handleRequest(
+                value -> requestService.processRequest(value, APPROVED),
+                id,
+                redirectAttributes,
+                SUCCESSFUL_APPROVE_REQUEST,
+                ERROR_APPROVE_REQUEST);
     }
 
     @GetMapping(ENDPOINT_REJECT_REQUESTS)
     public String rejectRequest(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        try {
-            requestService.rejectRequest(id);
-            redirectAttributes.addFlashAttribute(VAR_SUCCESS_MESSAGE, SUCCESSFUL_REJECT_REQUEST);
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute(VAR_ERROR_MESSAGE, ERROR_REJECT_REQUEST + e.getMessage());
-        }
-        return REDIRECT_REQUESTS;
+        return handleRequest(
+                value -> requestService.processRequest(value, REJECTED),
+                id,
+                redirectAttributes,
+                SUCCESSFUL_REJECT_REQUEST,
+                ERROR_REJECT_REQUEST);
     }
 
     @GetMapping(ENDPOINT_CANCEL_REQUESTS)
     public String cancelRequest(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        try {
-            requestService.cancelRequest(id);
-            redirectAttributes.addFlashAttribute(VAR_SUCCESS_MESSAGE, SUCCESSFUL_CANCEL_REQUEST);
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute(VAR_ERROR_MESSAGE, ERROR_CANCEL_REQUEST + e.getMessage());
-        }
-        return REDIRECT_REQUESTS;
+        return handleRequest(
+                value -> requestService.processRequest(value, CANCELLED),
+                id,
+                redirectAttributes,
+                SUCCESSFUL_CANCEL_REQUEST,
+                ERROR_CANCEL_REQUEST);
     }
 
-    private Long getCurrentUserId(Authentication auth) {
-        // Get current user
-        CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
-        return userDetails.getId();
+    private <T> String handleRequest (Consumer<T> consumer, T param, RedirectAttributes redirectAttributes, String successMessage, String errorMessage) {
+        try {
+            consumer.accept(param);
+            redirectAttributes.addFlashAttribute(VAR_SUCCESS_MESSAGE, successMessage);
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute(VAR_ERROR_MESSAGE, errorMessage + e.getMessage());
+        }
+        return REDIRECT_REQUESTS;
     }
 }

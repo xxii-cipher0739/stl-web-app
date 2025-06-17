@@ -1,15 +1,16 @@
 package xyz.playground.stl_web_app.Service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import xyz.playground.stl_web_app.Model.CustomUserDetails;
 import xyz.playground.stl_web_app.Model.User;
-import xyz.playground.stl_web_app.Model.Wallet;
 import xyz.playground.stl_web_app.Repository.UserRepository;
-import xyz.playground.stl_web_app.Repository.WalletRepository;
 
-import java.math.BigDecimal;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Service
@@ -40,8 +41,35 @@ public class UserService {
         return createdUser;
     }
 
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
+
+    public List<User> getAllDispatchAndAdmins() {
+        return userRepository.findDispatchersAndAdmins();
+    }
+
     public User findActiveUser(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid user id:" + id));
     }
+
+    public CustomUserDetails getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return (CustomUserDetails) authentication.getPrincipal();
+    }
+
+    public Long getCurrentUserId() {
+        return getCurrentUser().getId();
+    }
+
+    public CustomUserDetails getCurrentUser(Authentication authentication) {
+        return (CustomUserDetails) authentication.getPrincipal();
+    }
+
+    public Long getCurrentUserId(Authentication authentication) {
+        return getCurrentUser(authentication).getId();
+    }
+
+
 }
