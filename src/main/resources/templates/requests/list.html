@@ -2,6 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org"
       xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
 <body>
+<h1 sec:authorize="hasRole('COLLECTOR') || hasRole('DISPATCHER')" class="h6">Balance: ₱<span th:text="${walletBalance}"></span></h1>
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">Requests</h1>
     <div class="btn-toolbar mb-2 mb-md-0">
@@ -48,7 +49,7 @@
         <tbody>
         <tr th:each="request : ${requestList}">
             <td th:text="${request.reference}"></td>
-            <td th:text="${#temporals.format(request.dateTimeCreated, 'EEEE, MMMM dd, yyyy hh:mm a')}"></td>
+            <td th:text="${#temporals.format(request.dateTimeCreated, 'EE, MMM dd, yyyy hh:mm:ss a')}"></td>
             <td>
                 <span th:each="user : ${users}" th:if="${user.id == request.requestedBy}" th:text="${user.name}"></span>
             </td>

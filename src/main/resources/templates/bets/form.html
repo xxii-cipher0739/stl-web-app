@@ -25,7 +25,7 @@
                     <option value="">Select Game</option>
                     <option th:each="game : ${games}"
                             th:value="${game.id}"
-                            th:text="${game.gameType + ' (' + #temporals.format(game.scheduleDateTime, 'EEEE, MMMM dd, yyyy hh:mm a') + ')'}"
+                            th:text="${game.getGameTypeValue + ' (' + #temporals.format(game.scheduleDateTime, 'EE, MMM dd, yyyy hh:mm a') + ')'}"
                             th:attr="data-game-type=${game.gameType}">
                     </option>
                 </select>
@@ -34,11 +34,11 @@
 
             <div class="mb-3">
                 <label for="bettor" class="form-label">Bettor</label>
-                <input type="text" class="form-control" id="bettor" th:field="*{bettor}">
+                <input type="text" class="form-control" id="bettor" th:field="*{bettor}" required>
             </div>
 
             <div class="mb-3">
-                <label class="form-label">Bet Numbers</label>
+                <label class="form-label">Number Pick(s)</label>
                 <input type="hidden" id="betNumbers" th:field="*{betNumbers}">
 
                 <!-- Dynamic input fields container -->
@@ -47,7 +47,7 @@
                 </div>
 
                 <small id="betNumbersHelp" class="form-text text-muted">
-                    Enter your bet numbers according to the game type
+                    Enter your number picks according to the game type
                 </small>
             </div>
 
@@ -57,7 +57,7 @@
                     <span class="input-group-text">₱</span>
                     <input type="number" class="form-control" id="amount" th:field="*{amount}" step="0.01" min="1" required>
                 </div>
-                <small class="form-text text-muted">Enter the amount you want to bet</small>
+                <small class="form-text text-muted">Enter the amount you want to bet. Current Balance: ₱ <span th:text="${walletBalance}"></span></small>
             </div>
 
             <div class="mb-3" th:if="${newBet.dateTimeCreated != null}">
@@ -71,19 +71,14 @@
                 <input type="text" class="form-control" id="status" th:value="${newBet.status}" readonly>
             </div>
 
-            <button type="submit" class="btn btn-primary">
+            <button type="submit" class="btn btn-primary"
+                    onclick="return confirm('Are you sure you want to save?');">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-save" viewBox="0 0 16 16">
                     <path d="M2 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H9.5a1 1 0 0 0-1 1v7.293l2.646-2.647a.5.5 0 0 1 .708.708l-3.5 3.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L7.5 9.293V2a2 2 0 0 1 2-2H14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h2.5a.5.5 0 0 1 0 1z"/>
                 </svg>
                 Save
             </button>
-            <a th:href="@{/bets}" class="btn btn-secondary">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-circle" viewBox="0 0 16 16">
-                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
-                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
-                </svg>
-                Cancel
-            </a>
+            <a th:href="@{/bets}" class="btn btn-secondary">Close</a>
         </form>
     </div>
 </div>

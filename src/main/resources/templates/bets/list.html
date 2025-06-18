@@ -2,6 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org"
       xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
 <body>
+<h1 sec:authorize="hasRole('COLLECTOR') || hasRole('DISPATCHER')" class="h6">Balance: ₱<span th:text="${walletBalance}"></span></h1>
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">Bets</h1>
     <div class="btn-toolbar mb-2 mb-md-0" sec:authorize="hasRole('COLLECTOR')">
@@ -38,7 +39,7 @@
         <tr>
             <th scope="col">Reference</th>
             <th scope="col" sec:authorize="hasRole('ADMIN')">Created By</th>
-            <th scope="col">Game</th>
+            <th scope="col">Game & Schedule</th>
             <th scope="col">Bettor</th>
             <th scope="col">Amount</th>
             <th scope="col">Number Picks</th>
@@ -53,13 +54,13 @@
             <td sec:authorize="hasRole('ADMIN')">
                 <span th:each="user : ${users}" th:if="${user.id == bet.createdBy}" th:text="${user.name}"></span>
             </td>
-            <td th:text="${bet.gameType + ' (' + #temporals.format(bet.gameSchedule, 'EEEE, MMMM dd, yyyy hh:mm a') + ')'}"></td>
+            <td th:text="${bet.gameType + ' (' + #temporals.format(bet.gameSchedule, 'EE, MMM dd, yyyy hh:mm a') + ')'}"></td>
             <td th:text="${bet.bettor}"></td>
             <td>
                 ₱ <span th:text="${bet.amount}"></span>
             </td>
             <td th:text="${bet.betNumbers}"></td>
-            <td th:text="${#temporals.format(bet.dateTimeCreated, 'EEEE, MMMM dd, yyyy hh:mm a')}"></td>
+            <td th:text="${#temporals.format(bet.dateTimeCreated, 'EE, MMM dd, yyyy hh:mm:ss a')}"></td>
             <td>
                 <span th:if="${bet.status == T(xyz.playground.stl_web_app.Constants.BetStatus).PLACED}" class="badge bg-primary">Placed</span>
                 <span th:if="${bet.status == T(xyz.playground.stl_web_app.Constants.BetStatus).CANCELLED}" class="badge bg-secondary">Cancelled</span>
@@ -75,7 +76,7 @@
                     </svg>
                     Edit
                 </a>
-                <a th:href="@{/bets/cancel/{id}(id=${bet.id})}" class="btn btn-sm btn-success"
+                <a th:href="@{/bets/confirm/{id}(id=${bet.id})}" class="btn btn-sm btn-success"
                    th:if="${bet.status == T(xyz.playground.stl_web_app.Constants.BetStatus).PLACED}"
                    onclick="return confirm('Are you sure you want to confirm this bet?');">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-circle" viewBox="0 0 16 16">

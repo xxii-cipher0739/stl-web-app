@@ -27,8 +27,9 @@ public class GameService {
         return gameRepository.findAll();
     }
 
-    public Optional<Game> getGameById(Long id) {
-        return gameRepository.findById(id);
+    public Game getGameById(Long id) {
+        return gameRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid game Id: " + id));
     }
 
     public List<Game> getUpcomingGames() {

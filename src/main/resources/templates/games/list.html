@@ -39,22 +39,24 @@
             <th scope="col">Game Type</th>
             <th scope="col">Cut-off Date</th>
             <th scope="col">Schedule Date</th>
+            <th scope="col">Winning Numbers</th>
             <th scope="col">Status</th>
-            <th scope="col">Actions</th>
+            <th scope="col" sec:authorize="hasRole('ADMIN')">Actions</th>
         </tr>
         </thead>
         <tbody>
         <tr th:each="game : ${gameList}">
             <td th:text="${game.getGameTypeValue()}"></td>
-            <td th:text="${#temporals.format(game.cutOffDateTime, 'EEEE, MMMM dd, yyyy hh:mm a')}"></td>
-            <td th:text="${#temporals.format(game.scheduleDateTime, 'EEEE, MMMM dd, yyyy hh:mm a')}"></td>
+            <td th:text="${#temporals.format(game.cutOffDateTime, 'EE, MMM dd, yyyy hh:mm a')}"></td>
+            <td th:text="${#temporals.format(game.scheduleDateTime, 'EE, MMM dd, yyyy hh:mm a')}"></td>
+            <td><span>TBA</span></td>
             <td>
                 <span th:if="${game.executed}" class="badge bg-danger">Executed</span>
                 <span th:unless="${game.executed}" class="badge bg-primary">Pending</span>
                 <span th:if="${game.enabled}" class="badge bg-success">Active</span>
                 <span th:unless="${game.enabled}" class="badge bg-secondary">Inactive</span>
             </td>
-            <td>
+            <td sec:authorize="hasRole('ADMIN')">
                 <a th:href="@{/games/edit/{id}(id=${game.id})}" sec:authorize="hasRole('ADMIN')"
                    th:class="${game.executed} ? 'btn btn-sm btn-primary disabled' : 'btn btn-sm btn-primary'">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pen" viewBox="0 0 16 16">

@@ -105,7 +105,7 @@
             <td>
                 ₱ <span th:text="${transaction.amount}"></span>
             </td>
-            <td th:text="${#temporals.format(transaction.datetimeStamp, 'EEEE, MMMM dd, yyyy hh:mm a')}"></td>
+            <td th:text="${#temporals.format(transaction.datetimeStamp, 'EE, MMM dd, yyyy hh:mm:ss a')}"></td>
             <td>
                 <span th:if="${transaction.action == 'APPROVED'}" class="badge bg-success">Approved</span>
                 <span th:if="${transaction.action == 'PENDING'}" class="badge bg-primary">Pending</span>

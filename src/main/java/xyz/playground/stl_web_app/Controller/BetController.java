@@ -6,21 +6,25 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import xyz.playground.stl_web_app.Constants.BetStatus;
 import xyz.playground.stl_web_app.Constants.GameType;
-import xyz.playground.stl_web_app.Model.Bet;
-import xyz.playground.stl_web_app.Model.Game;
-import xyz.playground.stl_web_app.Model.User;
-import xyz.playground.stl_web_app.Repository.UserRepository;
+import xyz.playground.stl_web_app.Model.*;
 import xyz.playground.stl_web_app.Service.BetService;
-import xyz.playground.stl_web_app.Model.CustomUserDetails;
 import xyz.playground.stl_web_app.Service.GameService;
+import xyz.playground.stl_web_app.Service.UserService;
+import xyz.playground.stl_web_app.Service.WalletService;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 import static xyz.playground.stl_web_app.Constants.StringConstants.*;
 
@@ -30,8 +34,11 @@ public class BetController {
     private final String NEW_BET = "newBet";
     private final String BETS = "bets";
 
+    private final String VAR_WALLET_BALANCE = "walletBalance";
+    private final String VAR_SELECTED_GAME_TYPE = "selectedGameType";
     private final String VAR_BET_LIST = "betList";
     private final String VAR_BET_STATUSES = "betStatuses";
+    private final String VAR_GAME_TYPES = "gameTypes";
     private final String VAR_GAMES = "games";
     private final String VAR_USERS = "users";
 
@@ -39,8 +46,8 @@ public class BetController {
     private final String ENDPOINT_BETS_ADD = "/bets/add";
     private final String ENDPOINT_BETS_EDIT = "/bets/edit/{id}";
     private final String ENDPOINT_BETS_UPDATE = "/bets/update/{id}";
+    private final String ENDPOINT_BETS_CONFIRM = "/bets/confirm/{id}";
     private final String ENDPOINT_BETS_CANCEL = "/bets/cancel/{id}";
-    private final String ENDPOINT_BETS_DELETE = "/bets/delete/{id}";
     private final String ENDPOINT_BET_LIST = "bets/list";
     private final String ENDPOINT_BET_FORM = "bets/form";
     private final String REDIRECT_BETS = "redirect:/bets";
@@ -51,12 +58,13 @@ public class BetController {
 
     private final String ERROR_ADD_BET = "Error placing bet: ";
     private final String ERROR_UPDATE_BET = "Error updating bet: ";
+    private final String ERROR_CONFIRM_BET = "Error updating bet: ";
     private final String ERROR_CANCEL_BET = "Error cancelling bet: ";
-    private final String ERROR_DELETE_BET = "Error deleting bet: ";
     private final String SUCCESSFUL_ADD_BET = "Bet placed successfully";
     private final String SUCCESSFUL_UPDATE_BET = "Bet updated successfully";
+    private final String SUCCESSFUL_CONFIRM_BET = "Bet confirmed successfully";
     private final String SUCCESSFUL_CANCEL_BET = "Bet cancelled successfully";
-    private final String SUCCESSFUL_DELETE_BET = "Bet deleted successfully";
+
 
     @Autowired
     private BetService betService;
@@ -65,19 +73,22 @@ public class BetController {
     private GameService gameService;
 
     @Autowired
-    private UserRepository userRepository;
+    private UserService userService;
+
+    @Autowired
+    private WalletService walletService;
 
     @GetMapping(ENDPOINT_BETS)
     public String listBets(Model model) {
+
         // Get current user
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
-        Long currentUserId = userDetails.getId();
+        Long currentUserId = userService.getCurrentUserId(auth);
 
         List<Bet> bets;
 
         // If admin, show all bets
-        if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+        if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals(ROLE_ + ADMIN_ROLE))) {
             bets = betService.getAllBets();
         } else {
             // For regular users, show only their bets
@@ -85,7 +96,10 @@ public class BetController {
         }
 
         // Get all users for display purposes (admin only)
-        List<User> users = userRepository.findAll();
+        List<User> users = userService.getAllUsers();
+
+        // Get wallet balance
+        BigDecimal balance = walletService.getWalletBalance(currentUserId);
 
         //DP: Search for game and update Bet details (game type and game schedule)
         List<Game> games = new ArrayList<>();
@@ -110,8 +124,12 @@ public class BetController {
             bet.setGameSchedule(matchedGame.getScheduleDateTime());
         }
 
+        //Sort Bets
+        bets.sort(Comparator.comparing(Bet::getDateTimeCreated).reversed());
+
         model.addAttribute(VAR_BET_LIST, bets);
         model.addAttribute(VAR_USERS, users);
+        model.addAttribute(VAR_WALLET_BALANCE, balance);
         model.addAttribute(VAR_BET_STATUSES, BetStatus.values());
         model.addAttribute(PAGE_TITLE, BETS_TITLE);
         model.addAttribute(ACTIVE_TAB, BETS);
@@ -120,12 +138,10 @@ public class BetController {
     }
 
     @GetMapping(ENDPOINT_BETS_ADD)
-    @PreAuthorize("hasRole('COLLECTOR')")
+    @PreAuthorize(ROLE_HAS_COLLECTOR)
     public String showAddForm(Model model) {
         // Get current user
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
-        Long currentUserId = userDetails.getId();
+        Long currentUserId = userService.getCurrentUserId();
 
         Bet bet = new Bet();
         bet.setCreatedBy(currentUserId);
@@ -133,9 +149,13 @@ public class BetController {
         // Get active games for dropdown
         List<Game> activeGames = gameService.getActiveGames();
 
+        // Get wallet balance
+        BigDecimal balance = walletService.getWalletBalance(currentUserId);
+
         model.addAttribute(NEW_BET, bet);
         model.addAttribute(VAR_GAMES, activeGames);
-        model.addAttribute("gameTypes", GameType.values());
+        model.addAttribute(VAR_WALLET_BALANCE, balance);
+        model.addAttribute(VAR_GAME_TYPES, GameType.values());
         model.addAttribute(PAGE_TITLE, BETS_ADD_TITLE);
         model.addAttribute(ACTIVE_TAB, BETS);
         model.addAttribute(VIEW_NAME, ENDPOINT_BET_FORM);
@@ -143,39 +163,25 @@ public class BetController {
     }
 
     @PostMapping(ENDPOINT_BETS_ADD)
-    @PreAuthorize("hasRole('COLLECTOR')")
+    @PreAuthorize(ROLE_HAS_COLLECTOR)
     public String addBet(@ModelAttribute Bet bet, RedirectAttributes redirectAttributes) {
-        try {
-            // Get current user
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
-            Long currentUserId = userDetails.getId();
-
-            System.out.println("bet: " + bet.getBettor());
-            betService.createBet(bet, currentUserId);
-            redirectAttributes.addFlashAttribute(VAR_SUCCESS_MESSAGE, SUCCESSFUL_ADD_BET);
-        } catch (Exception e) {
-            e.printStackTrace();
-            redirectAttributes.addFlashAttribute(VAR_ERROR_MESSAGE, ERROR_ADD_BET + e.getMessage());
-        }
-        return REDIRECT_BETS;
+        return handleRequest(
+                value -> {
+                    betService.createBet(value, userService.getCurrentUserId());
+                },
+                bet,
+                redirectAttributes,
+                SUCCESSFUL_ADD_BET,
+                ERROR_ADD_BET);
     }
 
     @GetMapping(ENDPOINT_BETS_EDIT)
-    @PreAuthorize("hasRole('COLLECTOR')")
+    @PreAuthorize(ROLE_HAS_COLLECTOR)
     public String showEditForm(@PathVariable Long id, Model model) {
         // Get current user
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
-        Long currentUserId = userDetails.getId();
+        Long currentUserId = userService.getCurrentUserId();
 
-        Bet bet = betService.findBet(id);
-
-        // Check if user owns this bet or is admin
-        boolean isAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-        if (!isAdmin && !bet.getCreatedBy().equals(currentUserId)) {
-            throw new IllegalArgumentException("You don't have permission to edit this bet");
-        }
+        Bet bet = betService.getAndValidateBet(id);
 
         // Get active games for dropdown
         List<Game> activeGames = gameService.getActiveGames();
@@ -183,10 +189,14 @@ public class BetController {
         // Get the game type for the selected game
         Game selectedGame = gameService.findGame(bet.getGameId());
 
+        // Get wallet balance
+        BigDecimal balance = walletService.getWalletBalance(currentUserId);
+
         model.addAttribute(NEW_BET, bet);
         model.addAttribute(VAR_GAMES, activeGames);
-        model.addAttribute("selectedGameType", selectedGame.getGameType());
-        model.addAttribute("gameTypes", GameType.values());
+        model.addAttribute(VAR_WALLET_BALANCE, balance);
+        model.addAttribute(VAR_SELECTED_GAME_TYPE, selectedGame.getGameType());
+        model.addAttribute(VAR_GAME_TYPES, GameType.values());
         model.addAttribute(PAGE_TITLE, BETS_EDIT_TITLE);
         model.addAttribute(ACTIVE_TAB, BETS);
         model.addAttribute(VIEW_NAME, ENDPOINT_BET_FORM);
@@ -194,66 +204,44 @@ public class BetController {
     }
 
     @PostMapping(ENDPOINT_BETS_UPDATE)
-    @PreAuthorize("hasRole('COLLECTOR')")
+    @PreAuthorize(ROLE_HAS_COLLECTOR)
     public String updateBet(@PathVariable Long id, @ModelAttribute Bet bet, RedirectAttributes redirectAttributes) {
-        try {
-            // Get current user
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
-            Long currentUserId = userDetails.getId();
+        return handleRequest(
+                value -> betService.updateBet(value, bet),
+                id,
+                redirectAttributes,
+                SUCCESSFUL_UPDATE_BET,
+                ERROR_UPDATE_BET);
+    }
 
-            System.out.println("bet: " + bet.getBettor());
-
-            // Check if user owns this bet or is admin
-            Bet existingBet = betService.findBet(id);
-            boolean isAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-            if (!isAdmin && !existingBet.getCreatedBy().equals(currentUserId)) {
-                throw new IllegalArgumentException("You don't have permission to update this bet");
-            }
-
-            betService.updateBet(id, bet);
-            redirectAttributes.addFlashAttribute(VAR_SUCCESS_MESSAGE, SUCCESSFUL_UPDATE_BET);
-        } catch (Exception e) {
-            e.printStackTrace();
-            redirectAttributes.addFlashAttribute(VAR_ERROR_MESSAGE, ERROR_UPDATE_BET + e.getMessage());
-        }
-        return REDIRECT_BETS;
+    @GetMapping(ENDPOINT_BETS_CONFIRM)
+    @PreAuthorize(ROLE_HAS_COLLECTOR)
+    public String confirmBet(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        return handleRequest(
+                value -> betService.confirmBet(value),
+                id,
+                redirectAttributes,
+                SUCCESSFUL_CONFIRM_BET,
+                ERROR_CONFIRM_BET);
     }
 
     @GetMapping(ENDPOINT_BETS_CANCEL)
-    @PreAuthorize("hasRole('COLLECTOR')")
+    @PreAuthorize(ROLE_HAS_COLLECTOR)
     public String cancelBet(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        try {
-            // Get current user
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
-            Long currentUserId = userDetails.getId();
-
-            // Check if user owns this bet or is admin
-            Bet existingBet = betService.findBet(id);
-            boolean isAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-            if (!isAdmin && !existingBet.getCreatedBy().equals(currentUserId)) {
-                throw new IllegalArgumentException("You don't have permission to cancel this bet");
-            }
-
-            betService.cancelBet(id);
-            redirectAttributes.addFlashAttribute(VAR_SUCCESS_MESSAGE, SUCCESSFUL_CANCEL_BET);
-        } catch (Exception e) {
-            e.printStackTrace();
-            redirectAttributes.addFlashAttribute(VAR_ERROR_MESSAGE, ERROR_CANCEL_BET + e.getMessage());
-        }
-        return REDIRECT_BETS;
+        return handleRequest(
+                value -> betService.cancelBet(value),
+                id,
+                redirectAttributes,
+                SUCCESSFUL_CANCEL_BET,
+                ERROR_CANCEL_BET);
     }
 
-    @GetMapping(ENDPOINT_BETS_DELETE)
-    @PreAuthorize(ROLE_HAS_ADMIN)
-    public String deleteBet(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+    private <T> String handleRequest (Consumer<T> consumer, T param, RedirectAttributes redirectAttributes, String successMessage, String errorMessage) {
         try {
-            betService.deleteBet(id);
-            redirectAttributes.addFlashAttribute(VAR_SUCCESS_MESSAGE, SUCCESSFUL_DELETE_BET);
+            consumer.accept(param);
+            redirectAttributes.addFlashAttribute(VAR_SUCCESS_MESSAGE, successMessage);
         } catch (Exception e) {
-            e.printStackTrace();
-            redirectAttributes.addFlashAttribute(VAR_ERROR_MESSAGE, ERROR_DELETE_BET + e.getMessage());
+            redirectAttributes.addFlashAttribute(VAR_ERROR_MESSAGE, errorMessage + e.getMessage());
         }
         return REDIRECT_BETS;
     }

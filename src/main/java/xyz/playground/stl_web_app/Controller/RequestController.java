@@ -17,7 +17,9 @@ import xyz.playground.stl_web_app.Model.Request;
 import xyz.playground.stl_web_app.Model.User;
 import xyz.playground.stl_web_app.Service.RequestService;
 import xyz.playground.stl_web_app.Service.UserService;
+import xyz.playground.stl_web_app.Service.WalletService;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -34,6 +36,7 @@ public class RequestController {
     private final String REQUESTS = "requests";
     private final String USERS = "users";
 
+    private final String VAR_WALLET_BALANCE = "walletBalance";
     private final String VAR_REQUESTS_LIST = "requestList";
     private final String VAR_REQUESTS_STATUSES = "requestStatuses";
     private final String VAR_CURRENT_USER_ID = "currentUserId";
@@ -74,6 +77,9 @@ public class RequestController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private WalletService walletService;
+
     @GetMapping(ENDPOINT_REQUESTS)
     public String listRequests(Model model) {
 
@@ -90,14 +96,18 @@ public class RequestController {
             requests.addAll(requestService.getRequestsByRequestedTo(currentUserId));
         }
 
-        // Get all users for display purposes (including non-active)
+        //Get all users for display purposes (including non-active)
         List<User> users = userService.getAllUsers();
+
+        //Get wallet balance
+        BigDecimal balance = walletService.getWalletBalance(currentUserId);
 
         //Sort request from latest descending
         requests.sort(Comparator.comparing(Request::getDateTimeCreated).reversed());
 
         model.addAttribute(VAR_REQUESTS_LIST, requests);
         model.addAttribute(USERS, users);
+        model.addAttribute(VAR_WALLET_BALANCE, balance);
         model.addAttribute(VAR_CURRENT_USER_ID, currentUserId);
         model.addAttribute(VAR_REQUESTS_STATUSES, RequestStatus.values());
         model.addAttribute(PAGE_TITLE, REQUEST_TITLE);
