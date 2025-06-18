@@ -9,7 +9,6 @@
     <div class="col-md-6">
         <form th:action="${newGame.id == null ? '/games/add' : '/games/update/' + newGame.id}" th:object="${newGame}" method="post">
             <input type="hidden" th:field="*{id}" />
-            <input type="hidden" th:field="*{executed}" />
 
             <div class="mb-3">
                 <label for="gameType" class="form-label">Game Type</label>
@@ -22,27 +21,28 @@
                 </select>
             </div>
 
+            <div class="mb-3" th:if="${newGame.status == T(xyz.playground.stl_web_app.Constants.GameStatus).FOR_COMPLETION}">
+                <label for="winningCombination" class="form-label">Winning Combination</label>
+                <input type="text" class="form-control" id="winningCombination" th:field="*{winningCombination}"
+                       pattern="^[0-9-]+$" placeholder="Enter winning numbers (e.g., 1-2-3)">
+                <small class="form-text text-muted">Enter the winning combination separated by hyphens</small>
+            </div>
+
             <div class="mb-3">
                 <label for="scheduleDateTime" class="form-label">Schedule Date and Time</label>
                 <input type="datetime-local" class="form-control" id="scheduleDateTime"
-                       th:value="${formattedScheduleDate}" name="scheduleDateTime" required
-                       th:readonly="${newGame.executed}">
+                       th:value="${formattedScheduleDate}" name="scheduleDateTime" required>
             </div>
 
             <div class="mb-3">
                 <label for="cutOffDateTime" class="form-label">Cut-off Date and Time</label>
                 <input type="datetime-local" class="form-control" id="cutOffDateTime"
                        th:value="${formattedCutOffDate}" name="cutOffDateTime" required
-                       th:readonly="${newGame.executed}">
+                       >
                 <small class="form-text text-muted">Cut-off time must be before schedule time</small>
             </div>
 
-            <div class="mb-3 form-check">
-                <input type="checkbox" class="form-check-input" id="enabled" th:field="*{enabled}">
-                <label class="form-check-label" for="enabled">Active</label>
-            </div>
-
-            <button type="submit" class="btn btn-primary" th:disabled="${newGame.executed}"
+            <button type="submit" class="btn btn-primary"
                     onclick="return confirm('Are you sure you want to save?');">
                 Save
             </button>

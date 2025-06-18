@@ -9,9 +9,9 @@ import java.util.List;
 
 public interface GameRepository extends JpaRepository<Game, Long> {
 
-    @Query("SELECT g FROM Game g WHERE g.scheduleDateTime > :now AND g.enabled = true ORDER BY g.scheduleDateTime ASC")
+    @Query("SELECT g FROM Game g WHERE g.scheduleDateTime > :now ORDER BY g.scheduleDateTime ASC")
     List<Game> findUpcomingGames(LocalDateTime now);
 
-    @Query("SELECT g FROM Game g WHERE g.cutOffDateTime > :now AND g.enabled = true ORDER BY g.scheduleDateTime ASC")
+    @Query("SELECT g FROM Game g WHERE g.cutOffDateTime > :now ORDER BY g.scheduleDateTime ASC")
     List<Game> findActiveGames(LocalDateTime now);
 }

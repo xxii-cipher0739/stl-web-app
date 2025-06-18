@@ -3,6 +3,7 @@ package xyz.playground.stl_web_app.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import xyz.playground.stl_web_app.Constants.BetStatus;
+import xyz.playground.stl_web_app.Constants.GameStatus;
 import xyz.playground.stl_web_app.Constants.TransactionType;
 import xyz.playground.stl_web_app.Model.Bet;
 import xyz.playground.stl_web_app.Model.Game;
@@ -95,14 +96,10 @@ public class BetService {
     public Bet createBet(Bet bet, Long userId) {
 
         // Validate game exists and is active
-        Game game = gameService.getGameById(bet.getGameId());
+        Game game = gameService.findGame(bet.getGameId());
 
-        if (!game.isEnabled()) {
-            throw new IllegalStateException("Game is not active");
-        }
-
-        if (game.isExecuted()) {
-            throw new IllegalStateException("Game has already been executed");
+        if (game.getStatus() != GameStatus.ONGOING) {
+            throw new IllegalStateException("Game status is not ongoing.");
         }
 
         LocalDateTime now = LocalDateTime.now();
@@ -136,9 +133,9 @@ public class BetService {
         Bet existingBet = getAndValidateBet(id);
 
         // Check if game is still open for betting
-        Game game = gameService.getGameById(existingBet.getGameId());
+        Game game = gameService.findGame(existingBet.getGameId());
 
-        if (!game.isEnabled() || game.isExecuted() || LocalDateTime.now().isAfter(game.getCutOffDateTime())) {
+        if (game.getStatus() == GameStatus.COMPLETED || LocalDateTime.now().isAfter(game.getCutOffDateTime())) {
             throw new IllegalStateException("Game is no longer open for betting");
         }
 

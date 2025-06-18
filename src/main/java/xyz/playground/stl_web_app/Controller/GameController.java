@@ -8,11 +8,14 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import xyz.playground.stl_web_app.Constants.GameType;
 import xyz.playground.stl_web_app.Model.Game;
+import xyz.playground.stl_web_app.Service.CommonUtilsService;
 import xyz.playground.stl_web_app.Service.GameService;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.function.Consumer;
 
+import static xyz.playground.stl_web_app.Constants.RequestStatus.CANCELLED;
 import static xyz.playground.stl_web_app.Constants.StringConstants.ACTIVE_TAB;
 import static xyz.playground.stl_web_app.Constants.StringConstants.PAGE_TITLE;
 import static xyz.playground.stl_web_app.Constants.StringConstants.VIEW_NAME;
@@ -38,8 +41,11 @@ public class GameController {
     private final String ENDPOINT_GAMES_ADD = "/games/add";
     private final String ENDPOINT_GAMES_EDIT = "/games/edit/{id}";
     private final String ENDPOINT_GAMES_UPDATE = "/games/update/{id}";
-    private final String ENDPOINT_GAMES_DELETE = "/games/delete/{id}";
-    private final String ENDPOINT_GAMES_EXECUTE = "/games/execute/{id}";
+    private final String ENDPOINT_GAMES_FOR_COMPLETION = "/games/for_completion/{id}";
+    private final String ENDPOINT_GAMES_COMPLETE = "/games/complete/{id}";
+    private final String ENDPOINT_GAMES_START = "/games/start/{id}";
+    private final String ENDPOINT_GAMES_CANCEL = "/games/cancel/{id}";
+
     private final String ENDPOINT_GAME_LIST = "games/list";
     private final String ENDPOINT_GAME_FORM = "games/form";
     private final String REDIRECT_GAMES = "redirect:/games";
@@ -48,17 +54,24 @@ public class GameController {
     private final String GAMES_ADD_TITLE = "Games - Add Game";
     private final String GAMES_EDIT_TITLE ="Games - Edit Game";
 
-    private final String ERROR_ADD_GAME = "Error creating game: ";
-    private final String ERROR_UPDATE_GAME = "Error updating game: ";
-    private final String ERROR_DELETE_GAME = "Error deleting game: ";
-    private final String ERROR_EXECUTE_GAME = "Error executing game: ";
+    private final String ERROR_ADD_GAME = "Failed creating game: ";
+    private final String ERROR_UPDATE_GAME = "Failed updating game: ";
+    private final String ERROR_COMPLETE_GAME = "Failed completing game: ";
+    private final String ERROR_START_GAME = "Failed starting game: ";
+    private final String ERROR_CANCEL_GAME = "Failed cancelling game: ";
+    private final String ERROR_FOR_COMPLETION_GAME = "Failed updating game to for completion: ";
     private final String SUCCESSFUL_ADD_GAME = "Game created successfully";
     private final String SUCCESSFUL_UPDATE_GAME = "Game updated successfully";
-    private final String SUCCESSFUL_DELETE_GAME = "Game deleted successfully";
-    private final String SUCCESSFUL_EXECUTE_GAME = "Game executed successfully";
+    private final String SUCCESSFUL_COMPLETE_GAME = "Game completed successfully";
+    private final String SUCCESSFUL_START_GAME = "Game started successfully";
+    private final String SUCCESSFUL_CANCEL_GAME = "Game cancelled successfully";
+    private final String SUCCESSFUL_FOR_COMPLETION_GAME = "Game set for completion successfully";
 
     @Autowired
     private GameService gameService;
+
+    @Autowired
+    private CommonUtilsService commonUtilsService;
 
     @GetMapping(ENDPOINT_GAMES)
     public String listGames(Model model) {
@@ -78,9 +91,8 @@ public class GameController {
         // Set default values for new game
         game.setScheduleDateTime(LocalDateTime.now().plusDays(1));
         game.setCutOffDateTime(LocalDateTime.now().plusDays(1).minusHours(1));
-        //By default set to false
-        game.setEnabled(false);
 
+        //Set format to enable display in date picker
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(VAR_DATE_FORMAT);
         String formattedScheduleDate = game.getScheduleDateTime().format(formatter);
         String formattedCutOffDate = game.getCutOffDateTime().format(formatter);
@@ -98,14 +110,13 @@ public class GameController {
     @PostMapping(ENDPOINT_GAMES_ADD)
     @PreAuthorize(ROLE_HAS_ADMIN)
     public String addGame(@ModelAttribute Game game, RedirectAttributes redirectAttributes) {
-        try {
-            gameService.createGame(game);
-            redirectAttributes.addFlashAttribute(VAR_SUCCESS_MESSAGE, SUCCESSFUL_ADD_GAME);
-        } catch (Exception e) {
-            e.printStackTrace();
-            redirectAttributes.addFlashAttribute(VAR_ERROR_MESSAGE, ERROR_ADD_GAME + e.getMessage());
-        }
-        return REDIRECT_GAMES;
+        return commonUtilsService.handleRequest(
+                value -> gameService.createGame(value),
+                game,
+                redirectAttributes,
+                SUCCESSFUL_ADD_GAME,
+                ERROR_ADD_GAME,
+                REDIRECT_GAMES);
     }
 
     @GetMapping(ENDPOINT_GAMES_EDIT)
@@ -142,30 +153,52 @@ public class GameController {
         return REDIRECT_GAMES;
     }
 
-    @GetMapping(ENDPOINT_GAMES_DELETE)
+    @GetMapping(ENDPOINT_GAMES_START)
     @PreAuthorize(ROLE_HAS_ADMIN)
-    public String deleteGame(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        try {
-            gameService.deleteGame(id);
-            redirectAttributes.addFlashAttribute(VAR_SUCCESS_MESSAGE, SUCCESSFUL_DELETE_GAME);
-        } catch (Exception e) {
-            e.printStackTrace();
-            redirectAttributes.addFlashAttribute(VAR_ERROR_MESSAGE, ERROR_DELETE_GAME + e.getMessage());
-        }
-        return REDIRECT_GAMES;
+    public String startGame(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        return commonUtilsService.handleRequest(
+                value -> gameService.startGame(value),
+                id,
+                redirectAttributes,
+                SUCCESSFUL_START_GAME,
+                ERROR_START_GAME,
+                REDIRECT_GAMES);
     }
 
-    @GetMapping(ENDPOINT_GAMES_EXECUTE)
+    @GetMapping(ENDPOINT_GAMES_FOR_COMPLETION)
     @PreAuthorize(ROLE_HAS_ADMIN)
-    public String executeGame(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        try {
-            gameService.executeGame(id);
-            redirectAttributes.addFlashAttribute(VAR_SUCCESS_MESSAGE, SUCCESSFUL_EXECUTE_GAME);
-        } catch (Exception e) {
-            e.printStackTrace();
-            redirectAttributes.addFlashAttribute(VAR_ERROR_MESSAGE, ERROR_EXECUTE_GAME + e.getMessage());
-        }
-        return REDIRECT_GAMES;
+    public String processGame(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        return commonUtilsService.handleRequest(
+                value -> gameService.processGame(value),
+                id,
+                redirectAttributes,
+                SUCCESSFUL_FOR_COMPLETION_GAME,
+                ERROR_FOR_COMPLETION_GAME,
+                REDIRECT_GAMES);
+    }
+
+    @GetMapping(ENDPOINT_GAMES_COMPLETE)
+    @PreAuthorize(ROLE_HAS_ADMIN)
+    public String completeGame(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        return commonUtilsService.handleRequest(
+                value -> gameService.completeGame(value),
+                id,
+                redirectAttributes,
+                SUCCESSFUL_COMPLETE_GAME,
+                ERROR_COMPLETE_GAME,
+                REDIRECT_GAMES);
+    }
+
+    @GetMapping(ENDPOINT_GAMES_CANCEL)
+    @PreAuthorize(ROLE_HAS_ADMIN)
+    public String cancelGame(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        return commonUtilsService.handleRequest(
+                value -> gameService.cancelGame(value),
+                id,
+                redirectAttributes,
+                SUCCESSFUL_CANCEL_GAME,
+                ERROR_CANCEL_GAME,
+                REDIRECT_GAMES);
     }
 }
 

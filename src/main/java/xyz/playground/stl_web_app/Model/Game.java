@@ -1,6 +1,7 @@
 package xyz.playground.stl_web_app.Model;
 
 import jakarta.persistence.*;
+import xyz.playground.stl_web_app.Constants.GameStatus;
 import xyz.playground.stl_web_app.Constants.GameType;
 
 import java.time.LocalDateTime;
@@ -22,20 +23,38 @@ public class Game {
     @Column(nullable = false)
     private String gameType;
 
-    private boolean executed = false;
+    @Column
+    private String winningCombination;
 
-    private boolean enabled = true;
+    @Column
+    private double betAmountThreshold;
+
+    @Column
+    private double betThresholdPercentage;
+
+    @Column
+    private GameStatus status;
 
     public Game() {
     }
 
-    public Game(Long id, LocalDateTime scheduleDateTime, LocalDateTime cutOffDateTime, String gameType, boolean executed, boolean enabled) {
+    public Game(Long id,
+                LocalDateTime scheduleDateTime,
+                LocalDateTime cutOffDateTime,
+                String gameType,
+                String winningCombination,
+                double betAmountThreshold,
+                double betThresholdPercentage,
+                GameStatus status) {
+
         this.id = id;
         this.scheduleDateTime = scheduleDateTime;
         this.cutOffDateTime = cutOffDateTime;
         this.gameType = gameType;
-        this.executed = executed;
-        this.enabled = enabled;
+        this.winningCombination = winningCombination;
+        this.betAmountThreshold = betAmountThreshold;
+        this.betThresholdPercentage = betThresholdPercentage;
+        this.status = status;
     }
 
     public Long getId() {
@@ -70,20 +89,36 @@ public class Game {
         this.gameType = gameType;
     }
 
-    public boolean isExecuted() {
-        return executed;
+    public String getWinningCombination() {
+        return winningCombination;
     }
 
-    public void setExecuted(boolean executed) {
-        this.executed = executed;
+    public void setWinningCombination(String winningCombination) {
+        this.winningCombination = winningCombination;
     }
 
-    public boolean isEnabled() {
-        return enabled;
+    public GameStatus getStatus() {
+        return status;
     }
 
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
+    public double getBetAmountThreshold() {
+        return betAmountThreshold;
+    }
+
+    public void setBetAmountThreshold(double betAmountThreshold) {
+        this.betAmountThreshold = betAmountThreshold;
+    }
+
+    public double getBetThresholdPercentage() {
+        return betThresholdPercentage;
+    }
+
+    public void setBetThresholdPercentage(double betThresholdPercentage) {
+        this.betThresholdPercentage = betThresholdPercentage;
+    }
+
+    public void setStatus(GameStatus status) {
+        this.status = status;
     }
 
     public String getGameTypeValue() {
