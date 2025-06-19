@@ -2,6 +2,8 @@ package xyz.playground.stl_web_app.Service;
 
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import xyz.playground.stl_web_app.Constants.Action;
 import xyz.playground.stl_web_app.Constants.TransactionFlow;
@@ -85,6 +87,20 @@ public class TransactionService {
 
     public List<Transaction> getRecentTransactionsByUserId(Long userId, int limit) {
         return transactionRepository.findRecentTransactionsByUserId(userId, limit);
+    }
+
+    public Page<Transaction> searchTransactions(String reference, Pageable pageable) {
+        if (reference == null || reference.trim().isEmpty()) {
+            return transactionRepository.findAll(pageable);
+        }
+        return transactionRepository.findByReferenceContaining(reference.trim(), pageable);
+    }
+
+    public Page<Transaction> searchTransactionsByUser(Long userId, String reference, Pageable pageable) {
+        if (reference == null || reference.trim().isEmpty()) {
+            return transactionRepository.findByUserInvolved(userId, pageable);
+        }
+        return transactionRepository.findByUserInvolvedAndReferenceContaining(userId, reference.trim(), pageable);
     }
 
 }
