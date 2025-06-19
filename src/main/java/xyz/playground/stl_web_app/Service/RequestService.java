@@ -1,5 +1,6 @@
 package xyz.playground.stl_web_app.Service;
 
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -79,7 +80,6 @@ public class RequestService {
         return requestRepository.findByUserInvolvedAndReferenceContaining(userId, reference.trim(), pageable);
     }
 
-
     public void createRequest(Request request) {
 
         // Generate reference if not provided
@@ -126,10 +126,12 @@ public class RequestService {
         return request;
     }
 
+    @Transactional
     public void updateRequest(Request request) {
         requestRepository.save(request);
     }
 
+    @Transactional
     public void processRequest(Long id, RequestStatus status) {
 
         //Get request
@@ -147,8 +149,7 @@ public class RequestService {
             walletService.transferAmount(
                     request.getRequestedBy(),
                     request.getRequestedTo(),
-                    request.getAmount()
-            );
+                    request.getAmount());
         }
 
         //Save request

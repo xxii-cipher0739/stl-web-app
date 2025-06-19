@@ -16,6 +16,7 @@ import xyz.playground.stl_web_app.Constants.RequestStatus;
 import xyz.playground.stl_web_app.Model.CustomUserDetails;
 import xyz.playground.stl_web_app.Model.Request;
 import xyz.playground.stl_web_app.Model.User;
+import xyz.playground.stl_web_app.Service.CommonUtilsService;
 import xyz.playground.stl_web_app.Service.RequestService;
 import xyz.playground.stl_web_app.Service.UserService;
 import xyz.playground.stl_web_app.Service.WalletService;
@@ -81,6 +82,9 @@ public class RequestController {
     @Autowired
     private WalletService walletService;
 
+    @Autowired
+    private CommonUtilsService commonUtilsService;
+
     @GetMapping(ENDPOINT_REQUESTS)
     public String listRequests(
             @RequestParam(defaultValue = DEFAULT_PAGE) int page,
@@ -94,9 +98,8 @@ public class RequestController {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         Long currentUserId = userService.getCurrentUserId(auth);
 
-        // Create pageable
-        Sort.Direction sortDirection = direction.equalsIgnoreCase(DESC) ? Sort.Direction.DESC : Sort.Direction.ASC;
-        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
+        //Get Pageable
+        Pageable pageable = commonUtilsService.getPageable(direction, sort, size, page);
 
         Page<Request> requestPage;
 

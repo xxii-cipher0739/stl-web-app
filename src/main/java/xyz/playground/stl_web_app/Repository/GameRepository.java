@@ -5,8 +5,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import xyz.playground.stl_web_app.Constants.GameStatus;
 import xyz.playground.stl_web_app.Model.Game;
-import xyz.playground.stl_web_app.Model.Request;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,4 +24,6 @@ public interface GameRepository extends JpaRepository<Game, Long> {
 
     @Query("SELECT g FROM Game g WHERE g.cutOffDateTime > :now ORDER BY g.scheduleDateTime ASC")
     List<Game> findActiveGames(LocalDateTime now);
+
+    List<Game> findByStatus(GameStatus status);
 }

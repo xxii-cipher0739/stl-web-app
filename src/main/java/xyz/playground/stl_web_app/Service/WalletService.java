@@ -50,29 +50,22 @@ public class WalletService {
         Wallet destinationWallet = getWalletByOwnerId(destinationUser.getId());
         BigDecimal destinationAmountOriginal = destinationWallet.getBalance();
 
-        System.out.println("Source: " + sourceUser.getName() + " to Destination: " + destinationUser.getName());
-        System.out.println("source amount: " + sourceWallet.getBalance() + " to Destination: " + destinationWallet.getBalance());
-
         try {
             //Only deduct from non-admin wallet
             if(!sourceUser.hasRole(ADMIN_ROLE)) {
                 deductAmount(sourceWallet, amount);
             }
 
-            System.out.println("Deducted: " + amount);
-
             //Only add to non-admin wallet
             if(!destinationUser.hasRole(ADMIN_ROLE)) {
                 increaseAmount(destinationWallet, amount);
-                System.out.println("Increase amount: "+ amount);
             }
 
         } catch (Exception e) {
             //If an error occurs. adjust wallet back to original state
             adjustWallet(sourceWallet, sourceAmountOriginal);
             adjustWallet(destinationWallet, destinationAmountOriginal);
-            System.out.println("adjusted back");
-            throw e;
+            throw new IllegalArgumentException(e.getMessage());
         }
 
     }

@@ -1,23 +1,21 @@
 package xyz.playground.stl_web_app.Controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import xyz.playground.stl_web_app.Constants.BetStatus;
 import xyz.playground.stl_web_app.Constants.GameType;
 import xyz.playground.stl_web_app.Model.*;
-import xyz.playground.stl_web_app.Service.BetService;
-import xyz.playground.stl_web_app.Service.GameService;
-import xyz.playground.stl_web_app.Service.UserService;
-import xyz.playground.stl_web_app.Service.WalletService;
+import xyz.playground.stl_web_app.Service.*;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -34,6 +32,7 @@ public class BetController {
     private final String NEW_BET = "newBet";
     private final String BETS = "bets";
 
+    private final String DEFAULT_BET_SORT = "dateTimeCreated";
     private final String VAR_WALLET_BALANCE = "walletBalance";
     private final String VAR_SELECTED_GAME_TYPE = "selectedGameType";
     private final String VAR_BET_LIST = "betList";
@@ -78,21 +77,33 @@ public class BetController {
     @Autowired
     private WalletService walletService;
 
+    @Autowired
+    private CommonUtilsService commonUtilsService;
+
     @GetMapping(ENDPOINT_BETS)
-    public String listBets(Model model) {
+    public String listBets(
+            @RequestParam(defaultValue = DEFAULT_PAGE) int page,
+            @RequestParam(defaultValue = DEFAULT_PAGE_SIZE) int size,
+            @RequestParam(defaultValue = DEFAULT_BET_SORT) String sort,
+            @RequestParam(defaultValue = DESC) String direction,
+            @RequestParam(required = false) String search,
+            Model model) {
 
         // Get current user
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         Long currentUserId = userService.getCurrentUserId(auth);
 
-        List<Bet> bets;
+        // Create pageable
+        Pageable pageable = commonUtilsService.getPageable(direction, sort, size, page);
+
+        Page<Bet> betPage;
 
         // If admin, show all bets
         if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals(ROLE_ + ADMIN_ROLE))) {
-            bets = betService.getAllBets();
+            betPage = betService.searchBets(search, pageable);
         } else {
             // For regular users, show only their bets
-            bets = betService.getBetsByUser(currentUserId);
+            betPage = betService.searchRequestsByUser(currentUserId, search, pageable);
         }
 
         // Get all users for display purposes (admin only)
@@ -103,7 +114,7 @@ public class BetController {
 
         //DP: Search for game and update Bet details (game type and game schedule)
         List<Game> games = new ArrayList<>();
-        for (Bet bet : bets) {
+        for (Bet bet : betPage.getContent()) {
             boolean isFound = false;
             Game matchedGame = new Game();
 
@@ -124,13 +135,14 @@ public class BetController {
             bet.setGameSchedule(matchedGame.getScheduleDateTime());
         }
 
-        //Sort Bets
-        bets.sort(Comparator.comparing(Bet::getDateTimeCreated).reversed());
-
-        model.addAttribute(VAR_BET_LIST, bets);
+        model.addAttribute(VAR_BET_LIST, betPage.getContent());
         model.addAttribute(VAR_USERS, users);
         model.addAttribute(VAR_WALLET_BALANCE, balance);
         model.addAttribute(VAR_BET_STATUSES, BetStatus.values());
+        model.addAttribute(PAGE, betPage);
+        model.addAttribute(SEARCH, search);
+        model.addAttribute(SORT, sort);
+        model.addAttribute(DIRECTION, direction);
         model.addAttribute(PAGE_TITLE, BETS_TITLE);
         model.addAttribute(ACTIVE_TAB, BETS);
         model.addAttribute(VIEW_NAME, ENDPOINT_BET_LIST);
@@ -147,7 +159,7 @@ public class BetController {
         bet.setCreatedBy(currentUserId);
 
         // Get active games for dropdown
-        List<Game> activeGames = gameService.getActiveGames();
+        List<Game> activeGames = gameService.getOngoingGames();
 
         // Get wallet balance
         BigDecimal balance = walletService.getWalletBalance(currentUserId);
@@ -184,7 +196,7 @@ public class BetController {
         Bet bet = betService.getAndValidateBet(id);
 
         // Get active games for dropdown
-        List<Game> activeGames = gameService.getActiveGames();
+        List<Game> activeGames = gameService.getOngoingGames();
 
         // Get the game type for the selected game
         Game selectedGame = gameService.findGame(bet.getGameId());

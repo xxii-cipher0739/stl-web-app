@@ -1,14 +1,18 @@
 package xyz.playground.stl_web_app.Service;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import xyz.playground.stl_web_app.Constants.TransactionType;
+import xyz.playground.stl_web_app.Model.Request;
 
 import java.util.UUID;
 import java.util.function.Consumer;
 
-import static xyz.playground.stl_web_app.Constants.StringConstants.VAR_ERROR_MESSAGE;
-import static xyz.playground.stl_web_app.Constants.StringConstants.VAR_SUCCESS_MESSAGE;
+import static xyz.playground.stl_web_app.Constants.StringConstants.*;
 
 @Service
 public class CommonUtilsService {
@@ -17,7 +21,14 @@ public class CommonUtilsService {
         return transactionType.getValue() + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 
-    public  <T> String handleRequest (Consumer<T> consumer,
+    public Pageable getPageable(String direction, String sort, int size, int page) {
+
+        // Create pageable
+        Sort.Direction sortDirection = direction.equalsIgnoreCase(DESC) ? Sort.Direction.DESC : Sort.Direction.ASC;
+        return PageRequest.of(page, size, Sort.by(sortDirection, sort));
+
+    }
+    public <T> String handleRequest (Consumer<T> consumer,
                                       T param,
                                       RedirectAttributes redirectAttributes,
                                       String successMessage,

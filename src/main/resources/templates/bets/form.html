@@ -25,7 +25,7 @@
                     <option value="">Select Game</option>
                     <option th:each="game : ${games}"
                             th:value="${game.id}"
-                            th:text="${game.getGameTypeValue + ' (' + #temporals.format(game.scheduleDateTime, 'EE, MMM dd, yyyy hh:mm a') + ')'}"
+                            th:text="${game.reference + '-' + game.getGameTypeValue + ' (' + #temporals.format(game.scheduleDateTime, 'EE, MMM dd, yyyy hh:mm a') + ')'}"
                             th:attr="data-game-type=${game.gameType}">
                     </option>
                 </select>

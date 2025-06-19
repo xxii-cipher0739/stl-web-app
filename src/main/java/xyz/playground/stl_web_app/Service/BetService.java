@@ -1,12 +1,15 @@
 package xyz.playground.stl_web_app.Service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import xyz.playground.stl_web_app.Constants.BetStatus;
 import xyz.playground.stl_web_app.Constants.GameStatus;
 import xyz.playground.stl_web_app.Constants.TransactionType;
 import xyz.playground.stl_web_app.Model.Bet;
 import xyz.playground.stl_web_app.Model.Game;
+import xyz.playground.stl_web_app.Model.Request;
 import xyz.playground.stl_web_app.Repository.BetRepository;
 
 import java.math.BigDecimal;
@@ -72,6 +75,20 @@ public class BetService {
         LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
         LocalDateTime endOfDay = LocalDate.now().atTime(LocalTime.MAX);
         return betRepository.countBetsByUserAndDateRange(userId, startOfDay, endOfDay);
+    }
+
+    public Page<Bet> searchBets(String reference, Pageable pageable) {
+        if (reference == null || reference.trim().isEmpty()) {
+            return betRepository.findAll(pageable);
+        }
+        return betRepository.findByReferenceContaining(reference.trim(), pageable);
+    }
+
+    public Page<Bet> searchRequestsByUser(Long userId, String reference, Pageable pageable) {
+        if (reference == null || reference.trim().isEmpty()) {
+            return betRepository.findByUserInvolved(userId, pageable);
+        }
+        return betRepository.findByUserInvolvedAndReferenceContaining(userId, reference.trim(), pageable);
     }
 
     public Bet getAndValidateBet(Long id) {

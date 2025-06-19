@@ -53,6 +53,10 @@ public class GameService {
         return gameRepository.findActiveGames(LocalDateTime.now());
     }
 
+    public List<Game> getOngoingGames() {
+        return gameRepository.findByStatus(GameStatus.ONGOING);
+    }
+
     public Game createGame(Game game) {
 
         //Validate dates
