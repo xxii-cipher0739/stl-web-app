@@ -14,10 +14,10 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     @Query("SELECT t FROM Transaction t ORDER BY t.datetimeStamp DESC LIMIT :limit")
     List<Transaction> findRecentTransactions(@Param("limit") int limit);
 
-    @Query("SELECT t FROM Transaction t WHERE t.performedBy = :performedBy ORDER BY t.datetimeStamp DESC")
-    List<Transaction> findByUserIdOrderByCreatedAtDesc(@Param("performedBy") Long performedBy);
+    @Query("SELECT t FROM Transaction t WHERE t.actorId = :userId OR t.targetId = :userId ORDER BY t.datetimeStamp DESC")
+    List<Transaction> findByUserIdOrderByCreatedAtDesc(@Param("userId") Long performedBy);
 
-    @Query("SELECT t FROM Transaction t WHERE t.performedBy = :performedBy ORDER BY t.datetimeStamp DESC LIMIT :limit")
-    List<Transaction> findRecentTransactionsByUserId(@Param("performedBy") Long performedBy, @Param("limit") int limit);
+    @Query("SELECT t FROM Transaction t WHERE t.actorId = :userId OR t.targetId = :userId ORDER BY t.datetimeStamp DESC LIMIT :limit")
+    List<Transaction> findRecentTransactionsByUserId(@Param("userId") Long performedBy, @Param("limit") int limit);
 
 }

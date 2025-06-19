@@ -1,11 +1,13 @@
 package xyz.playground.stl_web_app.Service;
 
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import xyz.playground.stl_web_app.Constants.Action;
+import xyz.playground.stl_web_app.Constants.TransactionFlow;
 import xyz.playground.stl_web_app.Constants.TransactionType;
-import xyz.playground.stl_web_app.Model.CustomUserDetails;
+import xyz.playground.stl_web_app.Model.Game;
+import xyz.playground.stl_web_app.Model.Request;
 import xyz.playground.stl_web_app.Model.Transaction;
 import xyz.playground.stl_web_app.Repository.TransactionRepository;
 
@@ -17,26 +19,62 @@ import java.util.List;
 public class TransactionService {
 
     @Autowired
+    UserService userService;
+
+    @Autowired
     private TransactionRepository transactionRepository;
 
     public Transaction createTransaction(String reference, TransactionType type, BigDecimal amount, String status) {
-        // Get current user
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
-        Long currentUserId = userDetails.getId();
+        return null;
+    }
+
+    public void saveTransaction(Request request, Action action) {
 
         Transaction transaction = new Transaction();
 
-        transaction.setReference(reference);
-        transaction.setTransactionType(type.name());
-        transaction.setPerformedBy(currentUserId);
-        transaction.setAmount(amount);
-        transaction.setDatetimeStamp(LocalDateTime.now());
-        transaction.setAction(status);
+        transaction.setReference(request.getReference());
+        transaction.setTransactionFlow(TransactionFlow.NOT_APPLICABLE);
+        transaction.setTargetId(request.getRequestedTo());
+        transaction.setAmount(request.getAmount());
+        transaction.setAction(action);
 
-        return transactionRepository.save(transaction);
+        saveTransaction(transaction);
     }
 
+    public void saveTransaction(Request request, Action action, TransactionFlow transactionFlow, Long targetUser) {
+
+        Transaction transaction = new Transaction();
+
+        transaction.setReference(request.getReference());
+        transaction.setTransactionFlow(transactionFlow);
+        transaction.setTargetId(targetUser);
+        transaction.setAmount(request.getAmount());
+        transaction.setAction(action);
+
+        saveTransaction(transaction);
+    }
+
+    public void saveTransaction(Game game, Action action) {
+
+        Transaction transaction = new Transaction();
+
+        transaction.setReference(game.getReference());
+        transaction.setTransactionFlow(TransactionFlow.NOT_APPLICABLE);
+        transaction.setAmount(new BigDecimal(0));
+        transaction.setAction(action);
+
+        saveTransaction(transaction);
+    }
+
+    @Transactional
+    public void saveTransaction(Transaction transaction) {
+
+        //Set Date
+        transaction.setDatetimeStamp(LocalDateTime.now());
+        transaction.setActorId(userService.getCurrentUserId());
+
+        transactionRepository.save(transaction);
+    }
     public List<Transaction> getRecentTransactions(int limit) {
         return transactionRepository.findRecentTransactions(limit);
     }
@@ -48,6 +86,5 @@ public class TransactionService {
     public List<Transaction> getRecentTransactionsByUserId(Long userId, int limit) {
         return transactionRepository.findRecentTransactionsByUserId(userId, limit);
     }
-
 
 }

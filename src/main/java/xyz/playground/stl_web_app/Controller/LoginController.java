@@ -6,14 +6,13 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import xyz.playground.stl_web_app.Model.Game;
-import xyz.playground.stl_web_app.Model.Request;
-import xyz.playground.stl_web_app.Model.Transaction;
-import xyz.playground.stl_web_app.Model.User;
+import xyz.playground.stl_web_app.Model.*;
 import xyz.playground.stl_web_app.Service.*;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static xyz.playground.stl_web_app.Constants.StringConstants.*;
 
@@ -25,7 +24,6 @@ public class LoginController {
     private final String VAR_PENDING_REQUEST = "pendingRequests";
     private final String VAR_PENDING_REQUEST_COUNT = "pendingRequestsCount";
     private final String VAR_RECENT_TRANSACTIONS = "recentTransactions";
-    private final String VAR_UNKNOWN_USER = "Unknown User";
 
     private final String LOGIN = "login";
     private final String DASHBOARD = "dashboard";
@@ -76,11 +74,52 @@ public class LoginController {
                 // For regular users, show only their transactions
                 : transactionService.getRecentTransactionsByUserId(currentUserId, 15);
 
-
-        // Enhance transactions with users name
+        List<User> users = new ArrayList<>();
+        //Enhance transactions with users name for actor
         for (Transaction transaction : recentTransactions) {
-            User user = userService.getUserById(transaction.getPerformedBy());
-            transaction.setUserName((user != null) ? user.getName() : VAR_UNKNOWN_USER);
+            boolean isFound = false;
+            User matchedUser = new User();
+
+            for (User user: users) {
+                if (Objects.equals(user.getId(), transaction.getActorId())) {
+                    matchedUser = user;
+                    isFound = true;
+                    break;
+                }
+            }
+
+            if (!isFound) {
+                matchedUser = userService.getUserById(transaction.getActorId());
+                users.add(matchedUser);
+            }
+
+            transaction.setActorName(matchedUser.getName());
+        }
+
+        for (Transaction transaction : recentTransactions) {
+
+            if (null == transaction.getTargetId()) {
+                transaction.setTargetName("N/A");
+                continue;
+            }
+
+            boolean isFound = false;
+            User matchedUser = new User();
+
+            for (User user: users) {
+                if (Objects.equals(user.getId(), transaction.getTargetId())) {
+                    matchedUser = user;
+                    isFound = true;
+                    break;
+                }
+            }
+
+            if (!isFound) {
+                matchedUser = userService.getUserById(transaction.getTargetId());
+                users.add(matchedUser);
+            }
+
+            transaction.setTargetName(matchedUser.getName());
         }
 
         //TODO: Improve query for pending request

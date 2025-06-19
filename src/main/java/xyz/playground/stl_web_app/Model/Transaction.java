@@ -1,6 +1,8 @@
 package xyz.playground.stl_web_app.Model;
 
 import jakarta.persistence.*;
+import xyz.playground.stl_web_app.Constants.Action;
+import xyz.playground.stl_web_app.Constants.TransactionFlow;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -13,37 +15,62 @@ public class Transaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Transient
-    private String userName;
-
-    @Column
-    private String reference;
-
-    @Column
-    private String transactionType;
-
-    @Column
-    private Long performedBy;
-
-    @Column
-    private BigDecimal amount;
-
+    //Date
     @Column
     private LocalDateTime datetimeStamp;
 
+    //Reference (BET/REQ/REF/GAME)
     @Column
-    private String action;
+    private String reference;
+
+    //Actor (Name)
+    @Column
+    private Long actorId;
+
+    @Transient
+    private String actorName;
+
+    //Target(Name)
+    @Column
+    private Long targetId;
+
+    @Transient
+    private String targetName;
+
+    //Wallet Movement (In, Out, N/A)
+    @Column
+    private TransactionFlow transactionFlow;
+
+    //Amount
+    @Column
+    private BigDecimal amount;
+
+    //Transaction Description
+    @Column
+    private Action action;
 
     public Transaction() {
     }
 
-    public Transaction(Long id, String reference, String transactionType, Long performedBy, BigDecimal amount, LocalDateTime datetimeStamp, String action) {
+    public Transaction(Long id,
+                       LocalDateTime datetimeStamp,
+                       String reference,
+                       Long actorId,
+                       String actorName,
+                       Long targetId,
+                       String targetName,
+                       TransactionFlow transactionFlow,
+                       BigDecimal amount,
+                       Action action) {
         this.id = id;
-        this.reference = reference;
-        this.transactionType = transactionType;
-        this.performedBy = performedBy;
-        this.amount = amount;
         this.datetimeStamp = datetimeStamp;
+        this.reference = reference;
+        this.actorId = actorId;
+        this.actorName = actorName;
+        this.targetId = targetId;
+        this.targetName = targetName;
+        this.transactionFlow = transactionFlow;
+        this.amount = amount;
         this.action = action;
     }
 
@@ -55,6 +82,14 @@ public class Transaction {
         this.id = id;
     }
 
+    public LocalDateTime getDatetimeStamp() {
+        return datetimeStamp;
+    }
+
+    public void setDatetimeStamp(LocalDateTime datetimeStamp) {
+        this.datetimeStamp = datetimeStamp;
+    }
+
     public String getReference() {
         return reference;
     }
@@ -63,20 +98,44 @@ public class Transaction {
         this.reference = reference;
     }
 
-    public String getTransactionType() {
-        return transactionType;
+    public Long getActorId() {
+        return actorId;
     }
 
-    public void setTransactionType(String transactionType) {
-        this.transactionType = transactionType;
+    public void setActorId(Long actorId) {
+        this.actorId = actorId;
     }
 
-    public Long getPerformedBy() {
-        return performedBy;
+    public String getActorName() {
+        return actorName;
     }
 
-    public void setPerformedBy(Long performedBy) {
-        this.performedBy = performedBy;
+    public void setActorName(String actorName) {
+        this.actorName = actorName;
+    }
+
+    public Long getTargetId() {
+        return targetId;
+    }
+
+    public void setTargetId(Long targetId) {
+        this.targetId = targetId;
+    }
+
+    public String getTargetName() {
+        return targetName;
+    }
+
+    public void setTargetName(String targetName) {
+        this.targetName = targetName;
+    }
+
+    public TransactionFlow getTransactionFlow() {
+        return transactionFlow;
+    }
+
+    public void setTransactionFlow(TransactionFlow transactionFlow) {
+        this.transactionFlow = transactionFlow;
     }
 
     public BigDecimal getAmount() {
@@ -87,28 +146,11 @@ public class Transaction {
         this.amount = amount;
     }
 
-    public LocalDateTime getDatetimeStamp() {
-        return datetimeStamp;
-    }
-
-    public void setDatetimeStamp(LocalDateTime datetimeStamp) {
-        this.datetimeStamp = datetimeStamp;
-    }
-
-
-    public String getAction() {
+    public Action getAction() {
         return action;
     }
 
-    public void setAction(String action) {
+    public void setAction(Action action) {
         this.action = action;
-    }
-
-    public String getUserName() {
-        return userName;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
     }
 }

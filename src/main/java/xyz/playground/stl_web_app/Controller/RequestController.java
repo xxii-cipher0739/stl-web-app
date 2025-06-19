@@ -47,6 +47,7 @@ public class RequestController {
     private final String ENDPOINT_ADD_REQUESTS = "/requests/add";
     private final String ENDPOINT_EDIT_REQUESTS = "/requests/edit/{id}";
     private final String ENDPOINT_UPDATE_REQUESTS = "/requests/update/{id}";
+    private final String ENDPOINT_SUBMIT_REQUESTS = "/requests/submit/{id}";
     private final String ENDPOINT_APPROVE_REQUESTS = "/requests/approve/{id}";
     private final String ENDPOINT_REJECT_REQUESTS = "/requests/reject/{id}";
     private final String ENDPOINT_CANCEL_REQUESTS = "/requests/cancel/{id}";
@@ -59,14 +60,16 @@ public class RequestController {
     private final String REQUEST_TITLE_ADD = "Request - Add Request";
     private final String REQUEST_TITLE_EDIT ="Request - Edit Request";
 
-    private final String ERROR_ADD_REQUEST = "Error creating request: ";
-    private final String ERROR_UPDATE_REQUEST = "Error updating request: ";
-    private final String ERROR_APPROVE_REQUEST = "Error approving request: ";
-    private final String ERROR_REJECT_REQUEST = "Error rejecting request: ";
-    private final String ERROR_CANCEL_REQUEST = "Error cancelling request: ";
+    private final String ERROR_ADD_REQUEST = "Failed creating request: ";
+    private final String ERROR_UPDATE_REQUEST = "Failed updating request: ";
+    private final String ERROR_SUBMIT_REQUEST = "Failed submitting request: ";
+    private final String ERROR_APPROVE_REQUEST = "Failed approving request: ";
+    private final String ERROR_REJECT_REQUEST = "Failed rejecting request: ";
+    private final String ERROR_CANCEL_REQUEST = "Failed cancelling request: ";
 
     private final String SUCCESSFUL_ADD_REQUEST = "Request created successfully";
     private final String SUCCESSFUL_UPDATE_REQUEST = "Request updated successfully";
+    private final String SUCCESSFUL_SUBMIT_REQUEST = "Request submitted successfully";
     private final String SUCCESSFUL_APPROVE_REQUEST = "Request approved successfully";
     private final String SUCCESSFUL_REJECT_REQUEST = "Request rejected successfully";
     private final String SUCCESSFUL_CANCEL_REQUEST = "Request cancelled successfully";
@@ -205,6 +208,17 @@ public class RequestController {
                 redirectAttributes,
                 SUCCESSFUL_UPDATE_REQUEST,
                 ERROR_UPDATE_REQUEST,
+                REDIRECT_REQUESTS);
+    }
+
+    @GetMapping(ENDPOINT_SUBMIT_REQUESTS)
+    public String submitRequest(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        return commonUtilsService.handleRequest(
+                value -> requestService.processRequest(value, SUBMITTED),
+                id,
+                redirectAttributes,
+                SUCCESSFUL_SUBMIT_REQUEST,
+                ERROR_SUBMIT_REQUEST,
                 REDIRECT_REQUESTS);
     }
 

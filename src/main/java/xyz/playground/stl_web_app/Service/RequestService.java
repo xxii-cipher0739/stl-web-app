@@ -5,13 +5,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import xyz.playground.stl_web_app.Constants.Action;
 import xyz.playground.stl_web_app.Constants.RequestStatus;
+import xyz.playground.stl_web_app.Constants.TransactionFlow;
 import xyz.playground.stl_web_app.Constants.TransactionType;
 import xyz.playground.stl_web_app.Model.Request;
+import xyz.playground.stl_web_app.Model.User;
 import xyz.playground.stl_web_app.Repository.RequestRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+
+import static xyz.playground.stl_web_app.Constants.StringConstants.ADMIN_ROLE;
 
 @Service
 public class RequestService {
@@ -73,16 +78,11 @@ public class RequestService {
         // Set initial status to PENDING
         request.setStatus(RequestStatus.PENDING);
 
+        //Save Transaction
+        transactionService.saveTransaction(request, Action.CREATE_REQUEST);
+
         //Save request
-        Request createdRequest = requestRepository.save(request);
-
-        //Save transaction
-        transactionService.createTransaction(
-                createdRequest.getReference(),
-                TransactionType.REQUEST,
-                createdRequest.getAmount(),
-                createdRequest.getStatus().name());
-
+        requestRepository.save(request);
     }
 
     public Request validateUpdateRequest(Long id, Request request) {
@@ -103,6 +103,15 @@ public class RequestService {
 
     @Transactional
     public void updateRequest(Request request) {
+
+        if(request.getStatus() != RequestStatus.PENDING) {
+            throw new IllegalStateException("Cannot update request not on pending status.");
+        }
+
+        //Save Transaction
+        transactionService.saveTransaction(request, Action.UPDATE_REQUEST);
+
+        //Save Request
         requestRepository.save(request);
     }
 
@@ -116,7 +125,10 @@ public class RequestService {
         validateIfIsProcessed(request);
 
         //Update process and status
-        request.setProcessed(true);
+        if (RequestStatus.SUBMITTED != status) {
+            request.setProcessed(true);
+        }
+
         request.setStatus(status);
 
         //Transfer amount if approved
@@ -125,18 +137,30 @@ public class RequestService {
                     request.getRequestedBy(),
                     request.getRequestedTo(),
                     request.getAmount());
+
+            transactionService.saveTransaction(request, Action.APPROVE_REQUEST, TransactionFlow.IN, request.getRequestedBy());
+
+            User searchUser = userService.getUserById(request.getRequestedTo());
+
+            if (!searchUser.hasRole(ADMIN_ROLE)) {
+                transactionService.saveTransaction(request, Action.APPROVE_REQUEST, TransactionFlow.OUT, request.getRequestedTo());
+            }
+        }
+
+        if (RequestStatus.SUBMITTED == status) {
+            transactionService.saveTransaction(request, Action.SUBMIT_REQUEST);
+        }
+
+        if (RequestStatus.REJECTED == status) {
+            transactionService.saveTransaction(request, Action.REJECT_REQUEST);
+        }
+
+        if (RequestStatus.CANCELLED == status) {
+            transactionService.saveTransaction(request, Action.CANCEL_REQUEST);
         }
 
         //Save request
         requestRepository.save(request);
-
-        //Save transaction
-        transactionService.createTransaction(
-                request.getReference(),
-                TransactionType.REQUEST,
-                request.getAmount(),
-                request.getStatus().name());
-        
     }
 
     private void validateIfIsProcessed(Request request) {

@@ -103,6 +103,7 @@
             </td>
             <td>
                 <span th:if="${request.status == T(xyz.playground.stl_web_app.Constants.RequestStatus).PENDING}" class="badge bg-primary">Pending</span>
+                <span th:if="${request.status == T(xyz.playground.stl_web_app.Constants.RequestStatus).SUBMITTED}" class="badge bg-warning">Submitted</span>
                 <span th:if="${request.status == T(xyz.playground.stl_web_app.Constants.RequestStatus).APPROVED}" class="badge bg-success">Approved</span>
                 <span th:if="${request.status == T(xyz.playground.stl_web_app.Constants.RequestStatus).REJECTED}" class="badge bg-danger">Rejected</span>
                 <span th:if="${request.status == T(xyz.playground.stl_web_app.Constants.RequestStatus).CANCELLED}" class="badge bg-secondary">Cancelled</span>
@@ -116,9 +117,18 @@
                         <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"/>
                     </svg>
                 </a>
+                <a th:href="@{/requests/submit/{id}(id=${request.id})}" class="btn btn-sm btn-success border-dark"
+                   title="Submit Request"
+                   th:if="${request.status == T(xyz.playground.stl_web_app.Constants.RequestStatus).PENDING && request.requestedBy == currentUserId }"
+                   onclick="return confirm('Are you sure you want to submit?');">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-circle" viewBox="0 0 16 16">
+                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                        <path d="m10.97 4.97-.02.022-3.473 4.425-2.093-2.094a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05"/>
+                    </svg>
+                </a>
                 <a th:href="@{/requests/approve/{id}(id=${request.id})}" class="btn btn-sm btn-success border-dark"
                    title="Approve Request"
-                   th:if="${request.status == T(xyz.playground.stl_web_app.Constants.RequestStatus).PENDING && request.requestedTo == currentUserId}"
+                   th:if="${request.status == T(xyz.playground.stl_web_app.Constants.RequestStatus).SUBMITTED && request.requestedTo == currentUserId}"
                    onclick="return confirm('Are you sure you want to approve?');">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-circle" viewBox="0 0 16 16">
                         <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
@@ -127,7 +137,7 @@
                 </a>
                 <a th:href="@{/requests/reject/{id}(id=${request.id})}" class="btn btn-sm btn-danger border-dark"
                    title="Reject Request"
-                   th:if="${request.status == T(xyz.playground.stl_web_app.Constants.RequestStatus).PENDING && request.requestedTo == currentUserId}"
+                   th:if="${request.status == T(xyz.playground.stl_web_app.Constants.RequestStatus).SUBMITTED && request.requestedTo == currentUserId}"
                    onclick="return confirm('Are you sure you want to reject?');">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-circle-fill" viewBox="0 0 16 16">
                         <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293z"/>

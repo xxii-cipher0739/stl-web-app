@@ -4,7 +4,8 @@ public enum RequestStatus {
     PENDING("Pending"),
     APPROVED("Approved"),
     REJECTED("Rejected"),
-    CANCELLED("Cancelled");
+    CANCELLED("Cancelled"),
+    SUBMITTED("Submitted");
 
     private final String value;
 
