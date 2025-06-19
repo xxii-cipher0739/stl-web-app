@@ -103,8 +103,8 @@
 <body class="text-center">
 <main class="form-signin w-100 m-auto">
     <form th:action="@{/login}" method="post">
-        <h1 class="h3 mb-3 fw-normal">Welcome</h1>
-
+        <div><img th:src="@{/images/fingerprint.png}" title="Fingerprint icons created by Ian Anandara - Flaticon" height="64" class="me-2"> </div>
+        <h1 class="h3 mb-3 fw-normal">Sign in</h1>
         <div th:if="${param.error}" class="alert alert-danger" role="alert">
             Invalid username and password.
         </div>

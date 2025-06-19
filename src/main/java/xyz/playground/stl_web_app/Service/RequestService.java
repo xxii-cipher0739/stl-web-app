@@ -1,6 +1,8 @@
 package xyz.playground.stl_web_app.Service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import xyz.playground.stl_web_app.Constants.RequestStatus;
 import xyz.playground.stl_web_app.Constants.TransactionType;
@@ -54,6 +56,29 @@ public class RequestService {
     public List<Request> getPendingRequests() {
         return requestRepository.findByProcessed(false);
     }
+
+    public Page<Request> getAllRequests(Pageable pageable) {
+        return requestRepository.findAll(pageable);
+    }
+
+    public Page<Request> searchRequests(String reference, Pageable pageable) {
+        if (reference == null || reference.trim().isEmpty()) {
+            return requestRepository.findAll(pageable);
+        }
+        return requestRepository.findByReferenceContaining(reference.trim(), pageable);
+    }
+
+    public Page<Request> getRequestsByUser(Long userId, Pageable pageable) {
+        return requestRepository.findByUserInvolved(userId, pageable);
+    }
+
+    public Page<Request> searchRequestsByUser(Long userId, String reference, Pageable pageable) {
+        if (reference == null || reference.trim().isEmpty()) {
+            return requestRepository.findByUserInvolved(userId, pageable);
+        }
+        return requestRepository.findByUserInvolvedAndReferenceContaining(userId, reference.trim(), pageable);
+    }
+
 
     public void createRequest(Request request) {
 
@@ -148,4 +173,5 @@ public class RequestService {
         // Generate a unique reference code (REQ-UUID)
         return TransactionType.REQUEST.getValue() + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
+
 }

@@ -6,13 +6,31 @@
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">Requests</h1>
     <div class="btn-toolbar mb-2 mb-md-0">
-        <a th:href="@{/requests/add}" class="btn btn-sm btn-success" sec:authorize="hasRole('COLLECTOR') or hasRole('DISPATCHER')">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-square" viewBox="0 0 16 16">
-                <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/>
-                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+        <a th:href="@{/requests/add}" class="btn btn-sm btn-success border-dark" sec:authorize="hasRole('COLLECTOR') or hasRole('DISPATCHER')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-lg" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/>
             </svg>
             New Request
         </a>
+    </div>
+</div>
+
+<!-- Search Form -->
+<div class="row mb-3">
+    <div class="col-md-6">
+        <form th:action="@{/requests}" method="get" class="d-flex">
+            <input type="text" class="form-control input-sm me-2" name="search" th:value="${search}" placeholder="Search by reference...">
+            <input type="hidden" name="sort" th:value="${sort}">
+            <input type="hidden" name="direction" th:value="${direction}">
+            <button type="submit" class="btn btn-sm btn-primary border-dark ms-1">
+                <i class="bi bi-search"></i>
+            </button>
+            <a th:href="@{/requests}" class="btn btn-sm btn-secondary border-dark ms-1" th:if="${search}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="18" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16">
+                    <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+                </svg>
+            </a>
+        </form>
     </div>
 </div>
 
@@ -33,15 +51,39 @@
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
 
-<div class="table-responsive">
+<div class="table-responsive table-sm">
     <table class="table table-striped table-bordered table-sm">
         <thead>
         <tr>
-            <th scope="col">Reference</th>
-            <th scope="col">Date Created</th>
+            <th scope="col">
+                <a th:href="@{/requests(sort='reference', direction=${sort == 'reference' and direction == 'asc' ? 'desc' : 'asc'}, search=${search})}"
+                   class="text-decoration-none text-white">
+                    Reference
+                    <span th:if="${sort == 'reference'}">
+                        <i th:class="${direction == 'asc' ? 'bi bi-arrow-up' : 'bi bi-arrow-down'}"></i>
+                    </span>
+                </a>
+            </th>
+            <th scope="col">
+                <a th:href="@{/requests(sort='dateTimeCreated', direction=${sort == 'dateTimeCreated' and direction == 'asc' ? 'desc' : 'asc'}, search=${search})}"
+                   class="text-decoration-none text-white">
+                    Date Created
+                    <span th:if="${sort == 'dateTimeCreated'}">
+                        <i th:class="${direction == 'asc' ? 'bi bi-arrow-up' : 'bi bi-arrow-down'}"></i>
+                    </span>
+                </a>
+            </th>
             <th scope="col">Requested By</th>
             <th scope="col">Requested To</th>
-            <th scope="col">Amount</th>
+            <th scope="col">
+                <a th:href="@{/requests(sort='amount', direction=${sort == 'amount' and direction == 'asc' ? 'desc' : 'asc'}, search=${search})}"
+                   class="text-decoration-none text-white">
+                    Amount
+                    <span th:if="${sort == 'amount'}">
+                        <i th:class="${direction == 'asc' ? 'bi bi-arrow-up' : 'bi bi-arrow-down'}"></i>
+                    </span>
+                </a>
+            </th>
             <th scope="col">Status</th>
             <th scope="col">Actions</th>
         </tr>
@@ -65,40 +107,40 @@
                 <span th:if="${request.status == T(xyz.playground.stl_web_app.Constants.RequestStatus).REJECTED}" class="badge bg-danger">Rejected</span>
                 <span th:if="${request.status == T(xyz.playground.stl_web_app.Constants.RequestStatus).CANCELLED}" class="badge bg-secondary">Cancelled</span>
             </td>
-            <td>
-                <a th:href="@{/requests/edit/{id}(id=${request.id})}" class="btn btn-sm btn-primary"
+            <td class="btn-group">
+                <a th:href="@{/requests/edit/{id}(id=${request.id})}" class="btn btn-sm btn-primary border-dark"
+                   title="Edit Request"
                    th:if="${request.status == T(xyz.playground.stl_web_app.Constants.RequestStatus).PENDING && request.requestedBy == currentUserId }">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pen" viewBox="0 0 16 16">
-                        <path d="m13.498.795.149-.149a1.207 1.207 0 1 1 1.707 1.708l-.149.148a1.5 1.5 0 0 1-.059 2.059L4.854 14.854a.5.5 0 0 1-.233.131l-4 1a.5.5 0 0 1-.606-.606l1-4a.5.5 0 0 1 .131-.232l9.642-9.642a.5.5 0 0 0-.642.056L6.854 4.854a.5.5 0 1 1-.708-.708L9.44.854A1.5 1.5 0 0 1 11.5.796a1.5 1.5 0 0 1 1.998-.001m-.644.766a.5.5 0 0 0-.707 0L1.95 11.756l-.764 3.057 3.057-.764L14.44 3.854a.5.5 0 0 0 0-.708z"/>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+                        <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+                        <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"/>
                     </svg>
-                    Edit
                 </a>
-                <a th:href="@{/requests/approve/{id}(id=${request.id})}" class="btn btn-sm btn-success"
+                <a th:href="@{/requests/approve/{id}(id=${request.id})}" class="btn btn-sm btn-success border-dark"
+                   title="Approve Request"
                    th:if="${request.status == T(xyz.playground.stl_web_app.Constants.RequestStatus).PENDING && request.requestedTo == currentUserId}"
                    onclick="return confirm('Are you sure you want to approve?');">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-circle" viewBox="0 0 16 16">
                         <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
                         <path d="m10.97 4.97-.02.022-3.473 4.425-2.093-2.094a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05"/>
                     </svg>
-                    Approve
                 </a>
-                <a th:href="@{/requests/reject/{id}(id=${request.id})}" class="btn btn-sm btn-danger"
+                <a th:href="@{/requests/reject/{id}(id=${request.id})}" class="btn btn-sm btn-danger border-dark"
+                   title="Reject Request"
                    th:if="${request.status == T(xyz.playground.stl_web_app.Constants.RequestStatus).PENDING && request.requestedTo == currentUserId}"
                    onclick="return confirm('Are you sure you want to reject?');">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-circle-fill" viewBox="0 0 16 16">
+                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293z"/>
+                    </svg>
+                </a>
+                <a th:href="@{/requests/cancel/{id}(id=${request.id})}" class="btn btn-sm btn-secondary border-dark"
+                   title="Cancel Request"
+                   th:if="${request.status == T(xyz.playground.stl_web_app.Constants.RequestStatus).PENDING && request.requestedBy == currentUserId}"
+                   onclick="return confirm('Are you sure you want to cancel?');">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-circle" viewBox="0 0 16 16">
                         <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
                         <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
                     </svg>
-                    Reject
-                </a>
-                <a th:href="@{/requests/cancel/{id}(id=${request.id})}" class="btn btn-sm btn-secondary"
-                   th:if="${request.status == T(xyz.playground.stl_web_app.Constants.RequestStatus).PENDING && (request.requestedBy == currentUserId || #authorization.expression('hasRole(''ADMIN'')'))}"
-                   onclick="return confirm('Are you sure you want to cancel?');">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-square" viewBox="0 0 16 16">
-                        <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/>
-                        <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
-                    </svg>
-                    Cancel
                 </a>
             </td>
         </tr>
@@ -108,7 +150,48 @@
         </tbody>
     </table>
 </div>
+
+<!-- Pagination -->
+<nav th:if="${page.totalPages > 1}">
+    <ul class="pagination justify-content-center">
+        <li class="page-item" th:classappend="${!page.hasPrevious()} ? 'disabled'">
+            <a class="page-link" th:href="@{/requests(page=${page.number - 1}, size=${page.size}, sort=${sort}, direction=${direction}, search=${search})}">Previous</a>
+        </li>
+
+        <li class="page-item" th:each="i : ${#numbers.sequence(0, page.totalPages - 1)}"
+            th:classappend="${i == page.number} ? 'active'">
+            <a class="page-link" th:href="@{/requests(page=${i}, size=${page.size}, sort=${sort}, direction=${direction}, search=${search})}" th:text="${i + 1}">1</a>
+        </li>
+
+        <li class="page-item" th:classappend="${!page.hasNext()} ? 'disabled'">
+            <a class="page-link" th:href="@{/requests(page=${page.number + 1}, size=${page.size}, sort=${sort}, direction=${direction}, search=${search})}">Next</a>
+        </li>
+    </ul>
+</nav>
+
+<!-- Page Info -->
+<div class="d-flex justify-content-between align-items-center mt-3">
+    <span class="text-muted">
+        Showing <span th:text="${page.numberOfElements}"></span> of <span th:text="${page.totalElements}"></span> entries
+    </span>
+    <div class="d-flex align-items-center">
+        <label for="pageSize" class="form-label me-2 mb-0">Show:</label>
+        <select id="pageSize" class="form-select form-select-sm" style="width: auto;" onchange="changePageSize(this.value)">
+            <option value="5" th:selected="${page.size == 5}">5</option>
+            <option value="10" th:selected="${page.size == 10}">10</option>
+            <option value="25" th:selected="${page.size == 25}">25</option>
+            <option value="50" th:selected="${page.size == 50}">50</option>
+        </select>
+    </div>
+</div>
+
 <script>
+    function changePageSize(size) {
+        const url = new URL(window.location);
+        url.searchParams.set('size', size);
+        url.searchParams.set('page', '0'); // Reset to first page
+        window.location.href = url.toString();
+    }
     document.addEventListener('DOMContentLoaded', function() {
         // Auto-dismiss alerts after 5 seconds (5000 milliseconds)
         const alerts = document.querySelectorAll('.alert');

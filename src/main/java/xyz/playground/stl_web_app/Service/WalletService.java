@@ -39,6 +39,7 @@ public class WalletService {
     }
 
     public void transferAmount(Long destinationId, Long sourceId, BigDecimal amount) {
+        
         //Get existing and (source) active user for validation
         User sourceUser = userService.getActiveUser(sourceId);
         Wallet sourceWallet = getWalletByOwnerId(sourceUser.getId());

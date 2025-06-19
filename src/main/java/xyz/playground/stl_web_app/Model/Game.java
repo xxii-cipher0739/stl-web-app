@@ -15,6 +15,9 @@ public class Game {
     private Long id;
 
     @Column
+    private String reference;
+
+    @Column
     private LocalDateTime scheduleDateTime;
 
     @Column(nullable = false)
@@ -39,6 +42,7 @@ public class Game {
     }
 
     public Game(Long id,
+                String reference,
                 LocalDateTime scheduleDateTime,
                 LocalDateTime cutOffDateTime,
                 String gameType,
@@ -48,6 +52,7 @@ public class Game {
                 GameStatus status) {
 
         this.id = id;
+        this.reference = reference;
         this.scheduleDateTime = scheduleDateTime;
         this.cutOffDateTime = cutOffDateTime;
         this.gameType = gameType;
@@ -63,6 +68,14 @@ public class Game {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getReference() {
+        return reference;
+    }
+
+    public void setReference(String reference) {
+        this.reference = reference;
     }
 
     public LocalDateTime getScheduleDateTime() {

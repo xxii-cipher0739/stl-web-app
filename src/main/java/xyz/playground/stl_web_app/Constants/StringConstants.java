@@ -2,6 +2,15 @@ package xyz.playground.stl_web_app.Constants;
 
 public class StringConstants {
 
+    public static final String PAGE = "page";
+    public static final String SEARCH = "search";
+    public static final String SORT = "sort";
+    public static final String DIRECTION = "direction";
+    public static final String DESC = "desc";
+
+    public static final String DEFAULT_PAGE = "0";
+    public static final String DEFAULT_PAGE_SIZE = "10";
+
     public static final String PAGE_TITLE = "pageTitle";
     public static final String ACTIVE_TAB = "activeTab";
     public static final String VIEW_NAME = "viewName";

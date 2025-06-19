@@ -1,8 +1,11 @@
 package xyz.playground.stl_web_app.Service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import xyz.playground.stl_web_app.Constants.GameStatus;
+import xyz.playground.stl_web_app.Constants.TransactionType;
 import xyz.playground.stl_web_app.Model.Game;
 import xyz.playground.stl_web_app.Model.Request;
 import xyz.playground.stl_web_app.Repository.GameRepository;
@@ -21,10 +24,20 @@ public class GameService {
     private GameRepository gameRepository;
 
     @Autowired
+    private CommonUtilsService commonUtilsService;
+
+    @Autowired
     private NumberPickValidationService numberPickValidationService;
 
     public List<Game> getAllGames() {
         return gameRepository.findAll();
+    }
+
+    public Page<Game> searchGames(String reference, Pageable pageable) {
+        if (reference == null || reference.trim().isEmpty()) {
+            return gameRepository.findAll(pageable);
+        }
+        return gameRepository.findByReferenceContaining(reference.trim(), pageable);
     }
 
     public Game findGame(Long id) {
@@ -44,6 +57,9 @@ public class GameService {
 
         //Validate dates
         validateDates(game);
+
+        //Generate Reference
+        game.setReference(commonUtilsService.generateReference(TransactionType.GAME));
 
         //Set to pending
         game.setStatus(GameStatus.PENDING);

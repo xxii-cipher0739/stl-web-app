@@ -1,15 +1,16 @@
 package xyz.playground.stl_web_app.Controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import xyz.playground.stl_web_app.Constants.RequestStatus;
 import xyz.playground.stl_web_app.Model.CustomUserDetails;
@@ -21,7 +22,6 @@ import xyz.playground.stl_web_app.Service.WalletService;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -35,6 +35,7 @@ public class RequestController {
     private final String NEW_REQUEST = "newRequest";
     private final String REQUESTS = "requests";
     private final String USERS = "users";
+    private final String DEFAULT_REQUEST_SORT = "dateTimeCreated";
 
     private final String VAR_WALLET_BALANCE = "walletBalance";
     private final String VAR_REQUESTS_LIST = "requestList";
@@ -81,35 +82,47 @@ public class RequestController {
     private WalletService walletService;
 
     @GetMapping(ENDPOINT_REQUESTS)
-    public String listRequests(Model model) {
+    public String listRequests(
+            @RequestParam(defaultValue = DEFAULT_PAGE) int page,
+            @RequestParam(defaultValue = DEFAULT_PAGE_SIZE) int size,
+            @RequestParam(defaultValue = DEFAULT_REQUEST_SORT) String sort,
+            @RequestParam(defaultValue = DESC) String direction,
+            @RequestParam(required = false) String search,
+            Model model) {
 
+        // Get current user
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         Long currentUserId = userService.getCurrentUserId(auth);
 
-        List<Request> requests;
+        // Create pageable
+        Sort.Direction sortDirection = direction.equalsIgnoreCase(DESC) ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
 
-        //If admin, show all requests
-        if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals(ROLE_ + ADMIN_ROLE))) {
-            requests = requestService.getAllRequests();
+        Page<Request> requestPage;
+
+        // If admin, show all requests
+        if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+            requestPage = requestService.searchRequests(search, pageable);
         } else {
-            requests = requestService.getRequestsByRequestedBy(currentUserId);
-            requests.addAll(requestService.getRequestsByRequestedTo(currentUserId));
+            // For regular users, show requests they're involved in
+            requestPage = requestService.searchRequestsByUser(currentUserId, search, pageable);
         }
-
-        //Get all users for display purposes (including non-active)
-        List<User> users = userService.getAllUsers();
 
         //Get wallet balance
         BigDecimal balance = walletService.getWalletBalance(currentUserId);
 
-        //Sort request from latest descending
-        requests.sort(Comparator.comparing(Request::getDateTimeCreated).reversed());
+        // Get all users for display purposes
+        List<User> users = userService.getAllUsers();
 
-        model.addAttribute(VAR_REQUESTS_LIST, requests);
+        model.addAttribute(VAR_REQUESTS_LIST, requestPage.getContent());
         model.addAttribute(USERS, users);
         model.addAttribute(VAR_WALLET_BALANCE, balance);
         model.addAttribute(VAR_CURRENT_USER_ID, currentUserId);
         model.addAttribute(VAR_REQUESTS_STATUSES, RequestStatus.values());
+        model.addAttribute(PAGE, requestPage);
+        model.addAttribute(SEARCH, search);
+        model.addAttribute(SORT, sort);
+        model.addAttribute(DIRECTION, direction);
         model.addAttribute(PAGE_TITLE, REQUEST_TITLE);
         model.addAttribute(ACTIVE_TAB, REQUESTS);
         model.addAttribute(VIEW_NAME, ENDPOINT_REQUESTS_LIST);

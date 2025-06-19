@@ -1,6 +1,10 @@
 package xyz.playground.stl_web_app.Controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -13,16 +17,8 @@ import xyz.playground.stl_web_app.Service.GameService;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.function.Consumer;
 
-import static xyz.playground.stl_web_app.Constants.RequestStatus.CANCELLED;
-import static xyz.playground.stl_web_app.Constants.StringConstants.ACTIVE_TAB;
-import static xyz.playground.stl_web_app.Constants.StringConstants.PAGE_TITLE;
-import static xyz.playground.stl_web_app.Constants.StringConstants.VIEW_NAME;
-import static xyz.playground.stl_web_app.Constants.StringConstants.MAIN_LAYOUT;
-import static xyz.playground.stl_web_app.Constants.StringConstants.ROLE_HAS_ADMIN;
-import static xyz.playground.stl_web_app.Constants.StringConstants.VAR_SUCCESS_MESSAGE;
-import static xyz.playground.stl_web_app.Constants.StringConstants.VAR_ERROR_MESSAGE;
+import static xyz.playground.stl_web_app.Constants.StringConstants.*;
 
 
 @Controller
@@ -31,6 +27,7 @@ public class GameController {
     private final String NEW_GAME = "newGame";
     private final String GAMES = "games";
 
+    private final String DEFAULT_GAME_SORT = "reference";
     private final String VAR_GAME_LIST = "gameList";
     private final String VAR_GAME_TYPES = "gameTypes";
     private final String VAR_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm";
@@ -74,8 +71,24 @@ public class GameController {
     private CommonUtilsService commonUtilsService;
 
     @GetMapping(ENDPOINT_GAMES)
-    public String listGames(Model model) {
-        model.addAttribute(VAR_GAME_LIST, gameService.getAllGames());
+    public String listGames(@RequestParam(defaultValue = DEFAULT_PAGE) int page,
+                            @RequestParam(defaultValue = DEFAULT_PAGE_SIZE) int size,
+                            @RequestParam(defaultValue = DEFAULT_GAME_SORT) String sort,
+                            @RequestParam(defaultValue = DESC) String direction,
+                            @RequestParam(required = false) String search,
+                            Model model) {
+
+        // Create pageable
+        Sort.Direction sortDirection = direction.equalsIgnoreCase(DESC) ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
+
+        Page<Game> gamePage = gameService.searchGames(search, pageable);
+
+        model.addAttribute(VAR_GAME_LIST, gamePage.getContent());
+        model.addAttribute(PAGE, gamePage);
+        model.addAttribute(SEARCH, search);
+        model.addAttribute(SORT, sort);
+        model.addAttribute(DIRECTION, direction);
         model.addAttribute(PAGE_TITLE, GAMES_TITLE);
         model.addAttribute(ACTIVE_TAB, GAMES);
         model.addAttribute(VIEW_NAME, ENDPOINT_GAME_LIST);

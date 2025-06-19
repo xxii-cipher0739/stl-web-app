@@ -10,6 +10,12 @@
         <form th:action="${newGame.id == null ? '/games/add' : '/games/update/' + newGame.id}" th:object="${newGame}" method="post">
             <input type="hidden" th:field="*{id}" />
 
+            <div class="mb-3" th:if="${newGame.reference != null}">
+                <label for="reference" class="form-label">Reference</label>
+                <input type="text" class="form-control" id="reference"
+                       th:field="*{reference}" name="reference" readonly>
+            </div>
+
             <div class="mb-3">
                 <label for="gameType" class="form-label">Game Type</label>
                 <select class="form-select" id="gameType" th:field="*{gameType}" required th:disabled="${newGame.id != null}">
