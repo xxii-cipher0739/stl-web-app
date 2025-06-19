@@ -33,7 +33,7 @@ public class UserService {
                 roles)
         );
 
-        //walletService.createWallet(createdUser.getId());
+        //TODO create wallet
 
         return createdUser;
     }

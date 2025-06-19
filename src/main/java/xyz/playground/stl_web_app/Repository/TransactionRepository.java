@@ -7,14 +7,9 @@ import org.springframework.stereotype.Repository;
 import xyz.playground.stl_web_app.Model.Transaction;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
-    Optional<Transaction> findByReference(String reference);
-
-    @Query("SELECT t FROM Transaction t ORDER BY t.datetimeStamp DESC")
-    List<Transaction> findAllOrderByCreatedAtDesc();
 
     @Query("SELECT t FROM Transaction t ORDER BY t.datetimeStamp DESC LIMIT :limit")
     List<Transaction> findRecentTransactions(@Param("limit") int limit);

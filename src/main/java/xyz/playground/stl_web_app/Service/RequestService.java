@@ -12,7 +12,6 @@ import xyz.playground.stl_web_app.Repository.RequestRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 public class RequestService {
@@ -29,37 +28,16 @@ public class RequestService {
     @Autowired
     private UserService userService;
 
-    public List<Request> getAllRequests() {
-        return requestRepository.findAll();
-    }
+    @Autowired
+    private CommonUtilsService commonUtilsService;
 
     public Request getRequestById(Long id) {
         return requestRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid request Id:" + id));
     }
 
-    public List<Request> getRequestsByRequestedBy(Long userId) {
-        return requestRepository.findByRequestedBy(userId);
-    }
-
-    public List<Request> getRequestsByRequestedTo(Long userId) {
-        return requestRepository.findByRequestedTo(userId);
-    }
-
     public List<Request> getPendingRequestsForUser(Long userId) {
         return requestRepository.findPendingRequestsForUser(userId);
-    }
-
-    public List<Request> getProcessedRequests() {
-        return requestRepository.findByProcessed(true);
-    }
-
-    public List<Request> getPendingRequests() {
-        return requestRepository.findByProcessed(false);
-    }
-
-    public Page<Request> getAllRequests(Pageable pageable) {
-        return requestRepository.findAll(pageable);
     }
 
     public Page<Request> searchRequests(String reference, Pageable pageable) {
@@ -69,10 +47,6 @@ public class RequestService {
         return requestRepository.findByReferenceContaining(reference.trim(), pageable);
     }
 
-    public Page<Request> getRequestsByUser(Long userId, Pageable pageable) {
-        return requestRepository.findByUserInvolved(userId, pageable);
-    }
-
     public Page<Request> searchRequestsByUser(Long userId, String reference, Pageable pageable) {
         if (reference == null || reference.trim().isEmpty()) {
             return requestRepository.findByUserInvolved(userId, pageable);
@@ -80,11 +54,12 @@ public class RequestService {
         return requestRepository.findByUserInvolvedAndReferenceContaining(userId, reference.trim(), pageable);
     }
 
+    @Transactional
     public void createRequest(Request request) {
 
         // Generate reference if not provided
         if (request.getReference() == null || request.getReference().isEmpty()) {
-            request.setReference(generateReference());
+            request.setReference(commonUtilsService.generateReference(TransactionType.REQUEST));
         }
 
         //Set current user as requestor
@@ -168,11 +143,6 @@ public class RequestService {
         if (request.isProcessed()) {
             throw new IllegalStateException("Request already processed.");
         }
-    }
-
-    private String generateReference() {
-        // Generate a unique reference code (REQ-UUID)
-        return TransactionType.REQUEST.getValue() + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 
 }

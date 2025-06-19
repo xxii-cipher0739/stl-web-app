@@ -2,9 +2,7 @@ package xyz.playground.stl_web_app.Controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -14,12 +12,13 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import xyz.playground.stl_web_app.Constants.BetStatus;
 import xyz.playground.stl_web_app.Constants.GameType;
-import xyz.playground.stl_web_app.Model.*;
+import xyz.playground.stl_web_app.Model.Bet;
+import xyz.playground.stl_web_app.Model.Game;
+import xyz.playground.stl_web_app.Model.User;
 import xyz.playground.stl_web_app.Service.*;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -177,14 +176,15 @@ public class BetController {
     @PostMapping(ENDPOINT_BETS_ADD)
     @PreAuthorize(ROLE_HAS_COLLECTOR)
     public String addBet(@ModelAttribute Bet bet, RedirectAttributes redirectAttributes) {
-        return handleRequest(
+        return commonUtilsService.handleRequest(
                 value -> {
                     betService.createBet(value, userService.getCurrentUserId());
                 },
                 bet,
                 redirectAttributes,
                 SUCCESSFUL_ADD_BET,
-                ERROR_ADD_BET);
+                ERROR_ADD_BET,
+                REDIRECT_BETS);
     }
 
     @GetMapping(ENDPOINT_BETS_EDIT)
@@ -218,43 +218,38 @@ public class BetController {
     @PostMapping(ENDPOINT_BETS_UPDATE)
     @PreAuthorize(ROLE_HAS_COLLECTOR)
     public String updateBet(@PathVariable Long id, @ModelAttribute Bet bet, RedirectAttributes redirectAttributes) {
-        return handleRequest(
+        return commonUtilsService.handleRequest(
                 value -> betService.updateBet(value, bet),
                 id,
                 redirectAttributes,
                 SUCCESSFUL_UPDATE_BET,
-                ERROR_UPDATE_BET);
+                ERROR_UPDATE_BET,
+                REDIRECT_BETS);
     }
 
     @GetMapping(ENDPOINT_BETS_CONFIRM)
     @PreAuthorize(ROLE_HAS_COLLECTOR)
     public String confirmBet(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        return handleRequest(
+        return commonUtilsService.handleRequest(
                 value -> betService.confirmBet(value),
                 id,
                 redirectAttributes,
                 SUCCESSFUL_CONFIRM_BET,
-                ERROR_CONFIRM_BET);
+                ERROR_CONFIRM_BET,
+                REDIRECT_BETS);
     }
 
     @GetMapping(ENDPOINT_BETS_CANCEL)
     @PreAuthorize(ROLE_HAS_COLLECTOR)
     public String cancelBet(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        return handleRequest(
+        return commonUtilsService.handleRequest(
                 value -> betService.cancelBet(value),
                 id,
                 redirectAttributes,
                 SUCCESSFUL_CANCEL_BET,
-                ERROR_CANCEL_BET);
+                ERROR_CANCEL_BET,
+                REDIRECT_BETS);
     }
 
-    private <T> String handleRequest (Consumer<T> consumer, T param, RedirectAttributes redirectAttributes, String successMessage, String errorMessage) {
-        try {
-            consumer.accept(param);
-            redirectAttributes.addFlashAttribute(VAR_SUCCESS_MESSAGE, successMessage);
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute(VAR_ERROR_MESSAGE, errorMessage + e.getMessage());
-        }
-        return REDIRECT_BETS;
-    }
+
 }

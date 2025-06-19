@@ -1,13 +1,11 @@
 package xyz.playground.stl_web_app.Service;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import xyz.playground.stl_web_app.Constants.TransactionType;
-import xyz.playground.stl_web_app.Model.Request;
 
 import java.util.UUID;
 import java.util.function.Consumer;

@@ -37,10 +37,6 @@ public class TransactionService {
         return transactionRepository.save(transaction);
     }
 
-    public List<Transaction> getAllTransactions() {
-        return transactionRepository.findAllOrderByCreatedAtDesc();
-    }
-
     public List<Transaction> getRecentTransactions(int limit) {
         return transactionRepository.findRecentTransactions(limit);
     }

@@ -2,9 +2,7 @@ package xyz.playground.stl_web_app.Controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -163,12 +161,13 @@ public class RequestController {
     @PostMapping(ENDPOINT_ADD_REQUESTS)
     @PreAuthorize(ROLE_HAS_ANY_COLLECTOR_AND_DISPATCHER)
     public String addRequest(@ModelAttribute Request request, RedirectAttributes redirectAttributes) {
-        return handleRequest(
+        return commonUtilsService.handleRequest(
                 value -> requestService.createRequest(value),
                 request,
                 redirectAttributes,
                 SUCCESSFUL_ADD_REQUEST,
-                ERROR_ADD_REQUEST);
+                ERROR_ADD_REQUEST,
+                REDIRECT_REQUESTS);
     }
 
     @GetMapping(ENDPOINT_EDIT_REQUESTS)
@@ -200,43 +199,46 @@ public class RequestController {
 
     @PostMapping(ENDPOINT_UPDATE_REQUESTS)
     public String updateRequest(@PathVariable Long id, @ModelAttribute Request request, RedirectAttributes redirectAttributes) {
-
-        return handleRequest(
+        return commonUtilsService.handleRequest(
                 value -> requestService.updateRequest(value),
                 requestService.validateUpdateRequest(id, request),
                 redirectAttributes,
                 SUCCESSFUL_UPDATE_REQUEST,
-                ERROR_UPDATE_REQUEST);
+                ERROR_UPDATE_REQUEST,
+                REDIRECT_REQUESTS);
     }
 
     @GetMapping(ENDPOINT_APPROVE_REQUESTS)
     public String approveRequest(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        return handleRequest(
+        return commonUtilsService.handleRequest(
                 value -> requestService.processRequest(value, APPROVED),
                 id,
                 redirectAttributes,
                 SUCCESSFUL_APPROVE_REQUEST,
-                ERROR_APPROVE_REQUEST);
+                ERROR_APPROVE_REQUEST,
+                REDIRECT_REQUESTS);
     }
 
     @GetMapping(ENDPOINT_REJECT_REQUESTS)
     public String rejectRequest(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        return handleRequest(
+        return commonUtilsService.handleRequest(
                 value -> requestService.processRequest(value, REJECTED),
                 id,
                 redirectAttributes,
                 SUCCESSFUL_REJECT_REQUEST,
-                ERROR_REJECT_REQUEST);
+                ERROR_REJECT_REQUEST,
+                REDIRECT_REQUESTS);
     }
 
     @GetMapping(ENDPOINT_CANCEL_REQUESTS)
     public String cancelRequest(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        return handleRequest(
+        return commonUtilsService.handleRequest(
                 value -> requestService.processRequest(value, CANCELLED),
                 id,
                 redirectAttributes,
                 SUCCESSFUL_CANCEL_REQUEST,
-                ERROR_CANCEL_REQUEST);
+                ERROR_CANCEL_REQUEST,
+                REDIRECT_REQUESTS);
     }
 
     private <T> String handleRequest (Consumer<T> consumer, T param, RedirectAttributes redirectAttributes, String successMessage, String errorMessage) {

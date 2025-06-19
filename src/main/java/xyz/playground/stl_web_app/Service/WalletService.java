@@ -1,5 +1,6 @@
 package xyz.playground.stl_web_app.Service;
 
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import xyz.playground.stl_web_app.Model.User;
@@ -70,6 +71,7 @@ public class WalletService {
 
     }
 
+    @Transactional
     public void adjustWallet(Wallet wallet, BigDecimal amount) {
         if (wallet.getId() != null) {
             wallet.setBalance(amount);
@@ -91,6 +93,7 @@ public class WalletService {
         increaseAmount(wallet, amount);
     }
 
+    @Transactional
     private void deductAmount(Wallet wallet, BigDecimal amount) {
         BigDecimal newBalance = wallet.getBalance().subtract(amount);
 
@@ -103,6 +106,7 @@ public class WalletService {
         walletRepository.save(wallet);
     }
 
+    @Transactional
     private void increaseAmount(Wallet wallet, BigDecimal amount) {
         BigDecimal newBalance = wallet.getBalance().add(amount);
 

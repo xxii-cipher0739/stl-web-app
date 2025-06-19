@@ -1,5 +1,6 @@
 package xyz.playground.stl_web_app.Service;
 
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -9,15 +10,10 @@ import xyz.playground.stl_web_app.Constants.GameStatus;
 import xyz.playground.stl_web_app.Constants.TransactionType;
 import xyz.playground.stl_web_app.Model.Bet;
 import xyz.playground.stl_web_app.Model.Game;
-import xyz.playground.stl_web_app.Model.Request;
 import xyz.playground.stl_web_app.Repository.BetRepository;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.List;
-import java.util.Optional;
 
 @Service
 public class BetService {
@@ -40,41 +36,9 @@ public class BetService {
     @Autowired
     private NumberPickValidationService numberPickValidationService;
 
-    public List<Bet> getAllBets() {
-        return betRepository.findAll();
-    }
-
     public Bet findBet(Long id) {
         return betRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid bet Id: " + id));
-    }
-
-    public Optional<Bet> getBetByReference(String reference) {
-        return betRepository.findByReference(reference);
-    }
-
-    public List<Bet> getBetsByUser(Long userId) {
-        return betRepository.findByCreatedBy(userId);
-    }
-
-    public List<Bet> getBetsByGame(Long gameId) {
-        return betRepository.findByGameId(gameId);
-    }
-
-    public List<Bet> getBetsByStatus(BetStatus status) {
-        return betRepository.findByStatus(status);
-    }
-
-    public List<Bet> getBetsForToday(Long userId) {
-        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
-        LocalDateTime endOfDay = LocalDate.now().atTime(LocalTime.MAX);
-        return betRepository.findByCreatedByAndDateRange(userId, startOfDay, endOfDay);
-    }
-
-    public Long countBetsForToday(Long userId) {
-        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
-        LocalDateTime endOfDay = LocalDate.now().atTime(LocalTime.MAX);
-        return betRepository.countBetsByUserAndDateRange(userId, startOfDay, endOfDay);
     }
 
     public Page<Bet> searchBets(String reference, Pageable pageable) {
@@ -110,6 +74,7 @@ public class BetService {
         return existingBet;
     }
 
+    @Transactional
     public Bet createBet(Bet bet, Long userId) {
 
         // Validate game exists and is active
@@ -145,6 +110,7 @@ public class BetService {
         return betRepository.save(bet);
     }
 
+    @Transactional
     public void updateBet(Long id, Bet bet) {
 
         Bet existingBet = getAndValidateBet(id);
@@ -179,6 +145,7 @@ public class BetService {
         betRepository.save(existingBet);
     }
 
+    @Transactional
     public void cancelBet(Long id) {
 
         Bet bet = getAndValidateBet(id);
@@ -192,7 +159,7 @@ public class BetService {
         betRepository.save(bet);
     }
 
-
+    @Transactional
     public void confirmBet(long id) {
         Bet bet = getAndValidateBet(id);
 

@@ -1,5 +1,6 @@
 package xyz.playground.stl_web_app.Service;
 
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -7,7 +8,6 @@ import org.springframework.stereotype.Service;
 import xyz.playground.stl_web_app.Constants.GameStatus;
 import xyz.playground.stl_web_app.Constants.TransactionType;
 import xyz.playground.stl_web_app.Model.Game;
-import xyz.playground.stl_web_app.Model.Request;
 import xyz.playground.stl_web_app.Repository.GameRepository;
 
 import java.time.LocalDateTime;
@@ -57,6 +57,7 @@ public class GameService {
         return gameRepository.findByStatus(GameStatus.ONGOING);
     }
 
+    @Transactional
     public Game createGame(Game game) {
 
         //Validate dates
@@ -71,6 +72,7 @@ public class GameService {
         return gameRepository.save(game);
     }
 
+    @Transactional
     public void updateGame(Long id, Game game) {
 
         //Validate dates
@@ -121,6 +123,7 @@ public class GameService {
         gameRepository.save(existingGame);
     }
 
+    @Transactional
     public void startGame(Long id) {
 
         Game game = findGame(id);
@@ -136,6 +139,7 @@ public class GameService {
         gameRepository.save(game);
     }
 
+    @Transactional
     public void processGame(Long id) {
 
         Game game = findGame(id);
@@ -155,6 +159,7 @@ public class GameService {
         gameRepository.save(game);
     }
 
+    @Transactional
     public void completeGame(Long id) {
 
         Game game = findGame(id);
@@ -175,6 +180,7 @@ public class GameService {
         gameRepository.save(game);
     }
 
+    @Transactional
     public void cancelGame(Long id) {
         Game game = findGame(id);
 
